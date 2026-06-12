@@ -83,9 +83,11 @@ function MobileMenuToggle({ className }: { className?: string }) {
 function SidebarNavLinks({
   pathname,
   onNavigate,
+  tourTargets = false,
 }: {
   pathname: string;
   onNavigate?: () => void;
+  tourTargets?: boolean;
 }) {
   return (
     <>
@@ -100,11 +102,13 @@ function SidebarNavLinks({
               onNavigate?.();
             }}
             data-tour={
-              href === "/learn"
-                ? "nav-learn"
-                : href === "/practice"
-                  ? "nav-practice"
-                  : undefined
+              tourTargets
+                ? href === "/learn"
+                  ? "nav-learn"
+                  : href === "/practice"
+                    ? "nav-practice"
+                    : undefined
+                : undefined
             }
             className={cn(
               "flex min-h-11 items-center gap-3 rounded-xl border-2 border-b-4 px-3 py-2.5 text-sm font-extrabold lowercase transition-all duration-100",
@@ -169,7 +173,7 @@ export function AppSidebar() {
             <AppStatPills streak={streak} xp={xp} />
           </div>
           <nav className="flex flex-1 flex-col gap-2 p-4">
-            <SidebarNavLinks pathname={pathname} />
+            <SidebarNavLinks pathname={pathname} tourTargets />
           </nav>
           <div className="border-t border-white/10 p-4">
             <p className="text-xs lowercase text-on-ink/60">
@@ -248,9 +252,9 @@ export function AppSidebar() {
                 href={href}
                 data-tour={
                   href === "/learn"
-                    ? "nav-learn"
+                    ? "nav-learn-tab"
                     : href === "/practice"
-                      ? "nav-practice"
+                      ? "nav-practice-tab"
                       : undefined
                 }
                 onClick={() => {

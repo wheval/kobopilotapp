@@ -30,14 +30,14 @@ const tourSteps: {
     placement: "above",
   },
   {
-    target: '[data-tour="nav-learn"]',
+    target: '[data-tour="nav-learn-tab"], [data-tour="nav-learn"]',
     title: "lesson path",
     body: "see every lesson on the map — quizzes included.",
     speech: "the full path lives under learn.",
     placement: "above",
   },
   {
-    target: '[data-tour="nav-practice"]',
+    target: '[data-tour="nav-practice-tab"], [data-tour="nav-practice"]',
     title: "paper trade ngx",
     body: "practice buying dangcem, gtbco & more with ₦ play money.",
     speech: "zero risk — real nigerian tickers!",
@@ -49,11 +49,33 @@ const PAD = 10;
 const GAP = 20;
 const TOOLTIP_ESTIMATE = 320;
 
+function isElementVisible(node: Element): boolean {
+  if (!(node instanceof HTMLElement)) return false;
+
+  const style = window.getComputedStyle(node);
+  if (
+    style.display === "none" ||
+    style.visibility === "hidden" ||
+    style.opacity === "0"
+  ) {
+    return false;
+  }
+
+  if (node.closest('[aria-hidden="true"]')) return false;
+
+  const rect = node.getBoundingClientRect();
+  if (rect.width <= 0 || rect.height <= 0) return false;
+
+  const vw = window.innerWidth;
+  const vh = window.innerHeight;
+  return rect.right > 0 && rect.left < vw && rect.bottom > 0 && rect.top < vh;
+}
+
 function getVisibleRect(selector: string): DOMRect | null {
   const nodes = document.querySelectorAll(selector);
   for (const node of nodes) {
-    const rect = node.getBoundingClientRect();
-    if (rect.width > 0 && rect.height > 0) return rect;
+    if (!isElementVisible(node)) continue;
+    return node.getBoundingClientRect();
   }
   return null;
 }
@@ -114,9 +136,16 @@ export function AppTour() {
   const current = tourSteps[step];
 
   const measureTarget = useCallback(() => {
-    const el = document.querySelector(current.target);
-    el?.scrollIntoView({ block: "nearest", behavior: "smooth" });
-    setRect(getVisibleRect(current.target));
+    const visible = getVisibleRect(current.target);
+    if (visible) {
+      const nodes = document.querySelectorAll(current.target);
+      for (const node of nodes) {
+        if (!isElementVisible(node)) continue;
+        node.scrollIntoView({ block: "nearest", behavior: "smooth" });
+        break;
+      }
+    }
+    setRect(visible);
   }, [current.target]);
 
   useEffect(() => {
