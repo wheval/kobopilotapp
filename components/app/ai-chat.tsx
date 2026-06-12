@@ -283,7 +283,13 @@ export function AiChatFab() {
   );
 }
 
-export function AskChartButton({ symbol }: { symbol: string }) {
+export function AskChartButton({
+  symbol,
+  className,
+}: {
+  symbol: string;
+  className?: string;
+}) {
   const openChartChat = useChatStore((s) => s.openChartChat);
 
   return (
@@ -291,7 +297,7 @@ export function AskChartButton({ symbol }: { symbol: string }) {
       variant="secondary"
       size="sm"
       onClick={() => openChartChat(symbol)}
-      className="normal-case"
+      className={cn("normal-case", className)}
     >
       ask kobo about this chart
     </DuoButton>

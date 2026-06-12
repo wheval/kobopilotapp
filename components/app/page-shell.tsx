@@ -23,7 +23,7 @@ export function PageShell({
   return (
     <div
       className={cn(
-        "mx-auto w-full space-y-6 px-4 py-4 sm:px-6 sm:py-6",
+        "mx-auto w-full min-w-0 max-w-full space-y-6 px-4 py-4 sm:px-6 sm:py-6",
         sizeClass[size],
         className
       )}

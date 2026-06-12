@@ -38,16 +38,11 @@ function MarketSourceBadge() {
       <Badge className="bg-primary/15 text-primary hover:bg-primary/15">
         NGX
       </Badge>
-      <Badge
-        variant="outline"
-        className={cn(
-          source === "live"
-            ? "border-success text-success"
-            : "border-ink-soft text-ink-soft"
-        )}
-      >
-        {source === "live" ? `${providerLabel} live` : "simulated prices"}
-      </Badge>
+      {source === "live" && (
+        <Badge variant="outline" className="border-success text-success">
+          {providerLabel} live
+        </Badge>
+      )}
       {updatedAt && (
         <span className="text-xs lowercase text-ink-soft">
           updated {new Date(updatedAt).toLocaleTimeString("en-NG")}
@@ -63,7 +58,7 @@ export function Watchlist() {
   const setSelectedSymbol = useTradingStore((s) => s.setSelectedSymbol);
 
   return (
-    <Card>
+    <Card className="min-w-0">
       <CardHeader>
         <CardTitle className="text-ink">NGX watchlist</CardTitle>
         <CardDescription>Nigerian stocks · tap to trade</CardDescription>
@@ -81,13 +76,13 @@ export function Watchlist() {
               onSelect={() => setSelectedSymbol(item.symbol)}
               className="!py-3"
             >
-              <div className="flex w-full items-center justify-between gap-3 normal-case">
-                <div className="text-left">
-                  <div className="flex items-center gap-2">
-                    <span className="font-extrabold uppercase text-ink">
+              <div className="flex w-full min-w-0 items-center justify-between gap-2 normal-case sm:gap-3">
+                <div className="min-w-0 flex-1 text-left">
+                  <div className="flex min-w-0 items-center gap-2">
+                    <span className="shrink-0 font-extrabold uppercase text-ink">
                       {item.symbol}
                     </span>
-                    <span className="text-xs font-semibold lowercase text-ink-soft">
+                    <span className="truncate text-xs font-semibold lowercase text-ink-soft">
                       {item.name}
                     </span>
                   </div>
@@ -95,7 +90,7 @@ export function Watchlist() {
                 </div>
                 <div
                   className={cn(
-                    "flex items-center gap-1 text-sm font-extrabold",
+                    "flex shrink-0 items-center gap-1 text-sm font-extrabold",
                     positive ? "text-success" : "text-destructive"
                   )}
                 >

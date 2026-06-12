@@ -180,6 +180,32 @@
       padding-bottom: 0;
     }
   }
+
+  .app-sidebar-shell {
+    transition:
+      width var(--motion-base) var(--ease-standard),
+      border-color var(--motion-base) var(--ease-standard);
+  }
+
+  .app-sidebar-panel {
+    transition:
+      transform var(--motion-base) var(--ease-standard),
+      opacity var(--motion-fast) var(--ease-standard);
+  }
+
+  .chart-surface {
+    cursor: default;
+    touch-action: pan-x;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .chart-surface canvas {
+    cursor: default !important;
+  }
+
+  .chart-surface button {
+    touch-action: manipulation;
+  }
 }
 
 @keyframes float {
@@ -391,5 +417,10 @@
   .micro-card:hover,
   .micro-card:active {
     transform: none;
+  }
+
+  .app-sidebar-shell,
+  .app-sidebar-panel {
+    transition: none !important;
   }
 }

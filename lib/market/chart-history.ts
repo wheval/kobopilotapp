@@ -110,16 +110,61 @@ export function buildExtendedHistory(
   return points;
 }
 
+/** Anchor data to the visible time window so the line spans edge-to-edge. */
+export function prepareChartHistory(
+  points: LivelinePoint[],
+  price: number,
+  windowSecs: number,
+  nowSec: number = Math.floor(Date.now() / 1000)
+): LivelinePoint[] {
+  if (points.length === 0 || price <= 0) return points;
+
+  const leftEdge = nowSec - windowSecs;
+  const inWindow = points.filter(
+    (p) => p.time >= leftEdge - 1 && p.time <= nowSec + 1
+  );
+  let filtered =
+    inWindow.length >= 2 ? inWindow : points.slice(-Math.max(2, inWindow.length));
+
+  if (filtered.length === 0) {
+    filtered = [{ time: leftEdge, value: price }, { time: nowSec, value: price }];
+  } else if (filtered[0].time > leftEdge + 2) {
+    filtered = [{ time: leftEdge, value: filtered[0].value }, ...filtered];
+  }
+
+  const last = filtered[filtered.length - 1];
+  if (last.time >= nowSec - 1 && Math.abs(last.value - price) < 0.001) {
+    return [...filtered.slice(0, -1), { time: nowSec, value: price }];
+  }
+
+  return [...filtered, { time: nowSec, value: price }];
+}
+
 export function historyForWindow(
   liveHistory: LivelinePoint[],
   quote: WatchlistItem | undefined,
   updatedAtMs: number | null,
-  windowSecs: number
+  windowSecs: number,
+  price: number
 ): LivelinePoint[] {
-  if (!quote || !updatedAtMs) return liveHistory;
-  if (windowSecs >= 86_400) {
-    return buildExtendedHistory(quote, updatedAtMs, windowSecs);
+  const nowSec = Math.floor(Date.now() / 1000);
+
+  if (!quote) {
+    return prepareChartHistory(liveHistory, price, windowSecs, nowSec);
   }
-  if (liveHistory.length > 1) return liveHistory;
-  return buildLivelineHistory(quote.sparkline, quote.price, updatedAtMs);
+
+  let base: LivelinePoint[];
+  if (windowSecs >= 86_400) {
+    base = buildExtendedHistory(quote, updatedAtMs ?? Date.now(), windowSecs);
+  } else if (liveHistory.length > 1) {
+    base = liveHistory;
+  } else {
+    base = buildLivelineHistory(
+      quote.sparkline,
+      quote.price,
+      updatedAtMs ?? Date.now()
+    );
+  }
+
+  return prepareChartHistory(base, price, windowSecs, nowSec);
 }

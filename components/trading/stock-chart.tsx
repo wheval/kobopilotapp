@@ -26,7 +26,6 @@ export function StockChart() {
   const getPrice = useTradingStore((s) => s.getPrice);
   const quote = useMarketStore((s) => s.getQuote(selectedSymbol));
   const updatedAt = useMarketStore((s) => s.updatedAt);
-  const provider = useMarketStore((s) => s.provider);
 
   const price = getPrice(selectedSymbol);
   const historyRef = useRef<{ symbol: string; points: LivelinePoint[] }>({
@@ -79,7 +78,7 @@ export function StockChart() {
           ? history
           : buildLivelineHistory(quote?.sparkline ?? [], price, updatedAt);
 
-    return historyForWindow(live, quote, updatedAt, windowSecs);
+    return historyForWindow(live, quote, updatedAt, windowSecs, price);
   }, [history, price, updatedAt, quote, windowSecs]);
 
   const momentum =
@@ -90,42 +89,36 @@ export function StockChart() {
         : "flat";
 
   const positive = (quote?.change ?? 0) >= 0;
-  const providerLabel =
-    provider === "simulated"
-      ? "demo feed · refreshes every 30s"
-      : `${provider} · live`;
 
   return (
-    <div className="micro-card overflow-hidden rounded-2xl border-2 border-b-4 border-hairline-strong bg-paper p-4 shadow-soft-lift">
-      <div className="mb-3 flex flex-wrap items-start justify-between gap-3">
-        <div className="min-w-0 flex-1">
+    <div className="w-full min-w-0 max-w-full overflow-hidden rounded-lg lg:rounded-2xl border-2 border-b-4 border-hairline-strong bg-paper p-3 shadow-soft-lift sm:p-4">
+      <div className="mb-3 space-y-3">
+        <div className="min-w-0">
           <p className="text-xs font-bold uppercase text-ink-soft">live chart</p>
-          <p className="text-lg font-extrabold uppercase text-ink">{selectedSymbol}</p>
-          <p className="text-sm lowercase text-ink-soft">{getStockName(selectedSymbol)}</p>
-          {quote && (
-            <div
-              className={cn(
-                "mt-2 flex flex-wrap items-center gap-1.5 text-xs font-bold lowercase",
-                positive ? "text-success" : "text-destructive"
-              )}
-            >
-              {positive ? (
-                <TrendingUp className="size-3.5" />
-              ) : (
-                <TrendingDown className="size-3.5" />
-              )}
-              <span>{formatDailyComparison(quote)}</span>
-            </div>
-          )}
-        </div>
-        <div className="flex flex-col items-end gap-2">
-          <p className="max-w-[9rem] text-right text-[10px] font-bold uppercase leading-tight text-ink-soft">
-            {providerLabel}
+          <p className="truncate text-lg font-extrabold uppercase text-ink">
+            {selectedSymbol}
           </p>
-          <AskChartButton symbol={selectedSymbol} />
+          <p className="truncate text-sm lowercase text-ink-soft">
+            {getStockName(selectedSymbol)}
+          </p>
         </div>
+        {quote && (
+          <div
+            className={cn(
+              "flex flex-wrap items-center gap-1.5 text-xs font-bold lowercase leading-snug",
+              positive ? "text-success" : "text-destructive"
+            )}
+          >
+            {positive ? (
+              <TrendingUp className="size-3.5 shrink-0" />
+            ) : (
+              <TrendingDown className="size-3.5 shrink-0" />
+            )}
+            <span className="min-w-0 break-words">{formatDailyComparison(quote)}</span>
+          </div>
+        )}
       </div>
-      <div className="h-[220px] w-full min-w-0">
+      <div className="chart-surface w-full min-w-0 overflow-hidden">
         {displayHistory.length > 1 ? (
           <Liveline
             data={displayHistory}
@@ -135,22 +128,24 @@ export function StockChart() {
             momentum={momentum}
             showValue
             valueMomentumColor
-            exaggerate
             scrub
+            cursor="default"
             window={windowSecs}
             onWindowChange={handleWindowChange}
             windows={[...CHART_WINDOWS]}
             windowStyle="rounded"
             formatValue={(v) => formatNgn(v)}
             badgeVariant="minimal"
-            className="h-full w-full"
+            padding={{ top: 8, bottom: 28, left: 4, right: 56 }}
+            className="h-[min(220px,42vw)] w-full max-w-full sm:h-[240px]"
           />
         ) : (
-          <div className="flex h-full items-center justify-center text-sm lowercase text-ink-soft">
+          <div className="flex h-[min(220px,42vw)] items-center justify-center text-sm lowercase text-ink-soft sm:h-[240px]">
             loading chart…
           </div>
         )}
       </div>
+      <AskChartButton symbol={selectedSymbol} className="mt-3 w-full" />
     </div>
   );
 }

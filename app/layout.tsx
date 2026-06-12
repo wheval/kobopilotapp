@@ -13,6 +13,10 @@ export const metadata: Metadata = {
   title: "Kobopilot — learn. practice. trade.",
   description:
     "Gamified trading education with a friendly mascot, lessons, quizzes, and paper trading.",
+  icons: {
+    icon: [{ url: "/icon.svg", type: "image/svg+xml" }],
+    apple: [{ url: "/apple-icon.svg", type: "image/svg+xml" }],
+  },
 };
 
 export default function RootLayout({
