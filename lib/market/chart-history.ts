@@ -4,6 +4,14 @@ import { getPreviousClose } from "./quote-utils";
 
 export type LivelinePoint = { time: number; value: number };
 
+export type CandlePoint = {
+  time: number;
+  open: number;
+  high: number;
+  low: number;
+  close: number;
+};
+
 const POLL_INTERVAL_SEC = 30;
 const MAX_POINTS = 120;
 
@@ -167,4 +175,68 @@ export function historyForWindow(
   }
 
   return prepareChartHistory(base, price, windowSecs, nowSec);
+}
+
+/** Seconds per OHLC bar for the selected chart window. */
+export function candleWidthForWindow(windowSecs: number): number {
+  if (windowSecs <= 60) return POLL_INTERVAL_SEC;
+  if (windowSecs <= 300) return 60;
+  if (windowSecs <= 86_400) return 3_600;
+  return 86_400;
+}
+
+/** Bucket tick history into committed candles plus the live in-progress bar. */
+export function buildCandlesFromTicks(
+  ticks: LivelinePoint[],
+  candleWidthSecs: number,
+  nowSec: number = Math.floor(Date.now() / 1000)
+): { candles: CandlePoint[]; liveCandle: CandlePoint | undefined } {
+  if (ticks.length === 0 || candleWidthSecs <= 0) {
+    return { candles: [], liveCandle: undefined };
+  }
+
+  const bucketStart = (time: number) =>
+    Math.floor(time / candleWidthSecs) * candleWidthSecs;
+
+  const buckets = new Map<number, CandlePoint>();
+
+  for (const tick of ticks) {
+    const start = bucketStart(tick.time);
+    const existing = buckets.get(start);
+
+    if (!existing) {
+      buckets.set(start, {
+        time: start,
+        open: tick.value,
+        high: tick.value,
+        low: tick.value,
+        close: tick.value,
+      });
+      continue;
+    }
+
+    existing.high = Math.max(existing.high, tick.value);
+    existing.low = Math.min(existing.low, tick.value);
+    existing.close = tick.value;
+  }
+
+  const currentBucket = bucketStart(nowSec);
+  let liveCandle = buckets.get(currentBucket);
+
+  if (!liveCandle) {
+    const last = ticks[ticks.length - 1];
+    liveCandle = {
+      time: currentBucket,
+      open: last.value,
+      high: last.value,
+      low: last.value,
+      close: last.value,
+    };
+  }
+
+  const candles = [...buckets.values()]
+    .filter((candle) => candle.time < currentBucket)
+    .sort((a, b) => a.time - b.time);
+
+  return { candles, liveCandle };
 }

@@ -8,7 +8,9 @@ import { AskChartButton } from "@/components/app/ai-chat";
 import { formatNgn } from "@/lib/format-currency";
 import {
   appendLiveQuotePoint,
+  buildCandlesFromTicks,
   buildLivelineHistory,
+  candleWidthForWindow,
   CHART_WINDOWS,
   DEFAULT_CHART_WINDOW_SEC,
   historyForWindow,
@@ -34,7 +36,9 @@ export function StockChart() {
   });
   const [history, setHistory] = useState<LivelinePoint[]>([]);
   const [windowBySymbol, setWindowBySymbol] = useState<Record<string, number>>({});
+  const [chartMode, setChartMode] = useState<"line" | "candle">("line");
   const windowSecs = windowBySymbol[selectedSymbol] ?? DEFAULT_CHART_WINDOW_SEC;
+  const showLine = chartMode === "line";
 
   const handleWindowChange = (secs: number) => {
     setWindowBySymbol((prev) => ({ ...prev, [selectedSymbol]: secs }));
@@ -81,6 +85,16 @@ export function StockChart() {
     return historyForWindow(live, quote, updatedAt, windowSecs, price);
   }, [history, price, updatedAt, quote, windowSecs]);
 
+  const candleWidth = useMemo(
+    () => candleWidthForWindow(windowSecs),
+    [windowSecs]
+  );
+
+  const { candles, liveCandle } = useMemo(
+    () => buildCandlesFromTicks(displayHistory, candleWidth),
+    [displayHistory, candleWidth]
+  );
+
   const momentum =
     quote && quote.change > 0
       ? "up"
@@ -121,8 +135,16 @@ export function StockChart() {
       <div className="chart-surface w-full min-w-0 overflow-hidden">
         {displayHistory.length > 1 ? (
           <Liveline
+            mode="candle"
             data={displayHistory}
             value={price}
+            candles={candles}
+            liveCandle={liveCandle}
+            candleWidth={candleWidth}
+            lineMode={showLine}
+            lineData={displayHistory}
+            lineValue={price}
+            onModeChange={setChartMode}
             theme="light"
             color="#004a3d"
             momentum={momentum}
