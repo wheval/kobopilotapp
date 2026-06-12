@@ -13,39 +13,25 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { formatNgn } from "@/lib/format-currency";
-import { hapticSuccess, hapticError } from "@/lib/haptics";
+import { hapticError, hapticSuccess, hapticPress } from "@/lib/haptics";
 import { useMarketStore } from "@/lib/store/market-store";
 import { useTradingStore } from "@/lib/store/trading-store";
 import type { OrderSide } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
-function MiniSparkline({ data, positive }: { data: number[]; positive: boolean }) {
-  const min = Math.min(...data);
-  const max = Math.max(...data);
-  const range = max - min || 1;
-  const points = data
-    .map((value, i) => {
-      const x = (i / (data.length - 1)) * 100;
-      const y = 100 - ((value - min) / range) * 100;
-      return `${x},${y}`;
-    })
-    .join(" ");
-
-  return (
-    <svg viewBox="0 0 100 30" className="h-8 w-20" preserveAspectRatio="none">
-      <polyline
-        fill="none"
-        stroke={positive ? "#004a3d" : "#b5162a"}
-        strokeWidth="2"
-        points={points}
-      />
-    </svg>
-  );
-}
-
 function MarketSourceBadge() {
   const source = useMarketStore((s) => s.source);
+  const provider = useMarketStore((s) => s.provider);
   const updatedAt = useMarketStore((s) => s.updatedAt);
+
+  const providerLabel =
+    provider === "ngxpulse"
+      ? "ngxpulse"
+      : provider === "trove"
+        ? "trove"
+        : provider === "itick"
+          ? "itick"
+          : "simulated";
 
   return (
     <div className="flex flex-wrap items-center gap-2">
@@ -60,7 +46,7 @@ function MarketSourceBadge() {
             : "border-ink-soft text-ink-soft"
         )}
       >
-        {source === "live" ? "live quotes" : "simulated prices"}
+        {source === "live" ? `${providerLabel} live` : "simulated prices"}
       </Badge>
       {updatedAt && (
         <span className="text-xs lowercase text-ink-soft">
@@ -107,22 +93,19 @@ export function Watchlist() {
                   </div>
                   <p className="text-sm font-bold">{formatNgn(item.price)}</p>
                 </div>
-                <div className="flex items-center gap-3">
-                  <MiniSparkline data={item.sparkline} positive={positive} />
-                  <div
-                    className={cn(
-                      "flex items-center gap-1 text-sm font-extrabold",
-                      positive ? "text-success" : "text-destructive"
-                    )}
-                  >
-                    {positive ? (
-                      <TrendingUp className="size-4" />
-                    ) : (
-                      <TrendingDown className="size-4" />
-                    )}
-                    {positive ? "+" : ""}
-                    {item.changePercent.toFixed(2)}%
-                  </div>
+                <div
+                  className={cn(
+                    "flex items-center gap-1 text-sm font-extrabold",
+                    positive ? "text-success" : "text-destructive"
+                  )}
+                >
+                  {positive ? (
+                    <TrendingUp className="size-4" />
+                  ) : (
+                    <TrendingDown className="size-4" />
+                  )}
+                  {positive ? "+" : ""}
+                  {item.changePercent.toFixed(2)}%
                 </div>
               </div>
             </DuoSelectButton>
@@ -215,8 +198,9 @@ export function OrderForm() {
         </DuoButton>
         {message && (
           <p
+            key={message}
             className={cn(
-              "text-center text-sm font-bold lowercase",
+              "animate-pop-in text-center text-sm font-bold lowercase",
               message.includes("Bought") || message.includes("Sold")
                 ? "text-success"
                 : "text-destructive"
@@ -251,7 +235,14 @@ export function PortfolioSummary() {
             <CardTitle className="text-ink">Portfolio</CardTitle>
             <CardDescription>NGX paper trading · ₦1M starting cash</CardDescription>
           </div>
-          <DuoButton variant="ghost" size="sm" onClick={resetPortfolio}>
+          <DuoButton
+            variant="ghost"
+            size="sm"
+            onClick={() => {
+              hapticPress();
+              resetPortfolio();
+            }}
+          >
             reset
           </DuoButton>
         </CardHeader>

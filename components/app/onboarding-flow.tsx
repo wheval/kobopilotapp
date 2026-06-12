@@ -55,6 +55,11 @@ const tourSteps = [
 
 export function OnboardingFlow({ onDone }: { onDone: () => void }) {
   const completeOnboarding = useProgressStore((s) => s.completeOnboarding);
+  const onboardingAlreadyComplete = useProgressStore(
+    (s) => s.onboardingComplete
+  );
+  const xp = useProgressStore((s) => s.xp);
+  const streak = useProgressStore((s) => s.streak);
   const [step, setStep] = useState(0);
   const [goal, setGoal] = useState<LearningGoal | null>(null);
 
@@ -74,11 +79,13 @@ export function OnboardingFlow({ onDone }: { onDone: () => void }) {
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-end justify-center bg-ink/50 p-0 backdrop-blur-sm sm:items-center sm:p-4"
-      style={{ paddingBottom: "env(safe-area-inset-bottom, 0px)" }}
+      className="fixed inset-0 z-50 flex items-end justify-center bg-ink/60 p-4 sm:items-center"
+      style={{
+        paddingBottom: "max(1rem, env(safe-area-inset-bottom, 0px))",
+      }}
     >
       <div
-        className="flex max-h-[92dvh] w-full max-w-md flex-col rounded-t-2xl border-2 border-b-0 border-hairline-strong bg-canvas shadow-card sm:max-h-[85dvh] sm:rounded-xl sm:border-b-4"
+        className="flex max-h-[min(92dvh,calc(100dvh-2rem))] w-full max-w-md flex-col overflow-hidden rounded-2xl border-2 border-b-4 border-hairline-strong bg-canvas shadow-card sm:max-h-[85dvh]"
         role="dialog"
         aria-modal
         aria-labelledby="onboarding-title"
@@ -90,8 +97,8 @@ export function OnboardingFlow({ onDone }: { onDone: () => void }) {
               <div
                 key={i}
                 className={cn(
-                  "h-2 flex-1 rounded-full transition-colors",
-                  i <= step ? "bg-[#58cc02]" : "bg-hairline-strong"
+                  "h-2 flex-1 rounded-full transition-all duration-300",
+                  i <= step ? "bg-[#58cc02] scale-y-110" : "bg-hairline-strong"
                 )}
               />
             ))}
@@ -99,7 +106,7 @@ export function OnboardingFlow({ onDone }: { onDone: () => void }) {
         </div>
 
         <div className="flex-1 overflow-y-auto overscroll-contain px-4 py-4 sm:px-6">
-          <div className="flex flex-col items-center text-center">
+          <div key={step} className="animate-fade-up flex flex-col items-center text-center">
             <KoboMascot mood={moods[step]} size="md" speech={speeches[step]} />
 
             {step === 0 && (
@@ -146,11 +153,11 @@ export function OnboardingFlow({ onDone }: { onDone: () => void }) {
             )}
 
             {step === 2 && (
-              <div className="mt-4 w-full space-y-3 sm:mt-6">
+              <div className="micro-stagger mt-4 w-full space-y-3 sm:mt-6">
                 {tourSteps.map(({ icon: Icon, title, body }) => (
                   <div
                     key={title}
-                    className="flex items-start gap-3 rounded-xl border-2 border-b-4 border-hairline-strong bg-paper p-3 text-left"
+                    className="micro-card flex items-start gap-3 rounded-xl border-2 border-b-4 border-hairline-strong bg-paper p-3 text-left"
                   >
                     <span className="flex size-10 shrink-0 items-center justify-center rounded-lg border-b-4 border-b-primary-deep bg-primary">
                       <Icon className="size-5 text-on-primary" />
@@ -166,11 +173,21 @@ export function OnboardingFlow({ onDone }: { onDone: () => void }) {
 
             {step === 3 && (
               <div className="mt-4 space-y-3 sm:mt-6">
-                <AppStatPills streak={0} xp={20} className="justify-center" />
+                <AppStatPills
+                  streak={onboardingAlreadyComplete ? streak : 0}
+                  xp={onboardingAlreadyComplete ? xp : 20}
+                  className="justify-center"
+                />
                 <p className="text-sm lowercase text-ink-soft">
-                  finish onboarding to earn{" "}
-                  <span className="font-extrabold text-[#58cc02]">+20 xp</span>.
-                  your first lesson is waiting!
+                  {onboardingAlreadyComplete ? (
+                    <>welcome back — pick up where you left off!</>
+                  ) : (
+                    <>
+                      finish onboarding to earn{" "}
+                      <span className="font-extrabold text-[#58cc02]">+20 xp</span>.
+                      your first lesson is waiting!
+                    </>
+                  )}
                 </p>
               </div>
             )}
@@ -193,7 +210,7 @@ export function OnboardingFlow({ onDone }: { onDone: () => void }) {
             </DuoButton>
           ) : (
             <DuoButton fullWidth size="lg" variant="success" onClick={handleFinish}>
-              start learning
+              {onboardingAlreadyComplete ? "done" : "start learning"}
             </DuoButton>
           )}
           {step > 0 && step < 3 && (

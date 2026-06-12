@@ -27,15 +27,20 @@ export function simulateNgxQuotes(
       Math.min(seed.price * 1.25, prev.price * (1 + driftPct))
     );
     const rounded = Math.round(nextPrice * 100) / 100;
-    const change = rounded - seed.price;
+    const previousClose =
+      Math.round((seed.price - seed.change) * 100) / 100;
+    const change = Math.round((rounded - previousClose) * 100) / 100;
     const changePercent =
-      seed.price === 0 ? 0 : Math.round((change / seed.price) * 10000) / 100;
+      previousClose === 0
+        ? 0
+        : Math.round((change / previousClose) * 10000) / 100;
     const sparkline = [...prev.sparkline.slice(-6), rounded];
 
     return {
       ...seed,
       price: rounded,
-      change: Math.round(change * 100) / 100,
+      previousClose,
+      change,
       changePercent,
       sparkline,
     };

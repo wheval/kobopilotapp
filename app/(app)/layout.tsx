@@ -8,7 +8,7 @@ export default function AppLayout({
 }) {
   return (
     <AppProviders>
-      <div className="flex min-h-screen bg-canvas">
+      <div className="flex min-h-screen overflow-x-hidden bg-canvas">
         <AppSidebar />
         <div className="flex min-h-screen flex-1 flex-col md:pt-0">
           <AppTopBar />

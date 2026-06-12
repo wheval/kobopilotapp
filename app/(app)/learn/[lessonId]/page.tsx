@@ -3,11 +3,16 @@
 import { notFound } from "next/navigation";
 import { use, useState } from "react";
 
-import { QuizBlock } from "@/components/app/lesson-ui";
+import {
+  QuizBlock,
+  QuizCompleteScreen,
+} from "@/components/app/lesson-ui";
+import { GlossaryTerms } from "@/components/app/glossary-panel";
 import {
   MobileScrollSpacer,
   MobileStickyCta,
 } from "@/components/app/mobile-sticky-cta";
+import { PageShell } from "@/components/app/page-shell";
 import { KoboMascot } from "@/components/mascot/kobo-mascot";
 import { DuoButton } from "@/components/ui/duo-button";
 import {
@@ -26,9 +31,14 @@ export default function LessonPage({
   const { lessonId } = use(params);
   const lesson = getLessonById(lessonId);
   const completedLessonIds = useProgressStore((s) => s.completedLessonIds);
+  const quizScores = useProgressStore((s) => s.quizScores);
   const completeLesson = useProgressStore((s) => s.completeLesson);
   const isCompleted = useProgressStore((s) => s.isLessonCompleted(lessonId));
   const [showQuiz, setShowQuiz] = useState(false);
+  const [quizResults, setQuizResults] = useState<{
+    score: number;
+    correctCount: number;
+  } | null>(null);
   const [sectionIndex, setSectionIndex] = useState(0);
 
   if (!lesson) notFound();
@@ -37,6 +47,7 @@ export default function LessonPage({
   const nextLesson = getNextLesson(lessonId);
   const section = lesson.sections[sectionIndex];
   const isLastSection = sectionIndex >= lesson.sections.length - 1;
+  const savedScore = quizScores[lessonId];
 
   const handleContinue = () => {
     hapticTap();
@@ -49,49 +60,55 @@ export default function LessonPage({
 
   if (!unlocked) {
     return (
-      <div className="mx-auto flex max-w-md flex-col items-center gap-6 py-8 text-center sm:py-12">
-        <KoboMascot mood="sad" size="md" speech="finish the last lesson first!" />
-        <DuoButton href="/learn" variant="secondary" fullWidth>
-          back to path
-        </DuoButton>
-      </div>
+      <PageShell size="md">
+        <div className="flex flex-col items-center gap-6 text-center">
+          <KoboMascot mood="sad" size="md" speech="finish the last lesson first!" />
+          <DuoButton href="/learn" variant="secondary" fullWidth>
+            back to path
+          </DuoButton>
+        </div>
+      </PageShell>
+    );
+  }
+
+  if (showQuiz && quizResults) {
+    return (
+      <QuizCompleteScreen
+        score={quizResults.score}
+        correctCount={quizResults.correctCount}
+        totalQuestions={lesson.quiz.length}
+        nextLessonHref={nextLesson ? `/learn/${nextLesson.id}` : undefined}
+      />
     );
   }
 
   if (showQuiz && !isCompleted) {
     return (
-      <div className="mx-auto max-w-lg">
-        <QuizBlock
-          lessonId={lessonId}
-          onComplete={(score) => completeLesson(lessonId, score)}
-        />
-      </div>
+      <QuizBlock
+        lessonId={lessonId}
+        onComplete={(score, correctCount) => {
+          completeLesson(lessonId, score);
+          setQuizResults({ score, correctCount });
+        }}
+      />
     );
   }
 
   if (isCompleted) {
     return (
-      <div className="mx-auto flex max-w-md flex-col items-center gap-6 py-8 text-center sm:py-12">
-        <KoboMascot mood="celebrate" size="lg" speech="you already nailed this one!" />
-        {nextLesson ? (
-          <DuoButton href={`/learn/${nextLesson.id}`} fullWidth>
-            next lesson
-          </DuoButton>
-        ) : (
-          <DuoButton href="/practice" variant="success" fullWidth>
-            start paper trading
-          </DuoButton>
-        )}
-        <DuoButton href="/learn" variant="secondary" fullWidth>
-          back to path
-        </DuoButton>
-      </div>
+      <QuizCompleteScreen
+        score={savedScore ?? 0}
+        correctCount={Math.round(((savedScore ?? 0) / 100) * lesson.quiz.length)}
+        totalQuestions={lesson.quiz.length}
+        nextLessonHref={nextLesson ? `/learn/${nextLesson.id}` : undefined}
+        variant="review"
+      />
     );
   }
 
   return (
     <>
-      <div className="mx-auto max-w-lg space-y-4 pb-4 sm:space-y-6 md:pb-0">
+      <PageShell className="pb-2 md:pb-0">
         <div className="h-3 overflow-hidden rounded-full bg-cloud">
           <div
             className="h-full rounded-full bg-[#58cc02] transition-all duration-500"
@@ -105,7 +122,10 @@ export default function LessonPage({
           <KoboMascot mood="thinking" size="sm" speech="read this bit carefully!" />
         </div>
 
-        <div className="rounded-xl border-2 border-b-4 border-hairline-strong bg-paper p-4 shadow-soft-lift sm:p-6">
+        <div
+          key={sectionIndex}
+          className="animate-fade-up rounded-xl border-2 border-b-4 border-hairline-strong bg-paper p-4 shadow-soft-lift sm:p-6"
+        >
           <p className="text-[10px] font-bold uppercase text-ink-soft sm:text-xs">
             lesson {lesson.order} · step {sectionIndex + 1}/{lesson.sections.length}
           </p>
@@ -115,6 +135,7 @@ export default function LessonPage({
           <p className="mt-3 text-sm leading-relaxed lowercase text-ink-soft first-letter:uppercase sm:mt-4 sm:text-base">
             {section.body}
           </p>
+          <GlossaryTerms text={section.body} />
         </div>
 
         {isLastSection && (
@@ -131,17 +152,7 @@ export default function LessonPage({
           </div>
         )}
 
-        {sectionIndex > 0 && (
-          <button
-            type="button"
-            onClick={() => setSectionIndex((i) => i - 1)}
-            className="hidden min-h-11 w-full text-center text-sm font-bold lowercase text-ink-soft underline touch-manipulation md:block"
-          >
-            go back
-          </button>
-        )}
-
-        <div className="hidden md:block">
+        <div className="hidden space-y-2 md:block">
           <DuoButton
             fullWidth
             size="lg"
@@ -150,26 +161,39 @@ export default function LessonPage({
           >
             {isLastSection ? "start quiz" : "continue"}
           </DuoButton>
+          {sectionIndex > 0 && (
+            <button
+              type="button"
+              onClick={() => setSectionIndex((i) => i - 1)}
+              className="min-h-11 w-full text-center text-sm font-bold lowercase text-ink-soft underline touch-manipulation"
+            >
+              go back
+            </button>
+          )}
         </div>
-      </div>
+      </PageShell>
 
-      <MobileStickyCta className="flex flex-col gap-2">
+      <MobileStickyCta
+        className={sectionIndex > 0 ? "flex flex-row items-stretch gap-2" : undefined}
+      >
         <DuoButton
-          fullWidth
+          fullWidth={sectionIndex === 0}
           size="lg"
           variant={isLastSection ? "success" : "primary"}
           onClick={handleContinue}
+          className={sectionIndex > 0 ? "min-w-0 flex-2" : undefined}
         >
           {isLastSection ? "start quiz" : "continue"}
         </DuoButton>
         {sectionIndex > 0 && (
-          <button
-            type="button"
+          <DuoButton
+            variant="ghost"
+            size="lg"
             onClick={() => setSectionIndex((i) => i - 1)}
-            className="min-h-10 text-sm font-bold lowercase text-ink-soft underline touch-manipulation"
+            className="min-w-0 flex-1 normal-case"
           >
             go back
-          </button>
+          </DuoButton>
         )}
       </MobileStickyCta>
       <MobileScrollSpacer />

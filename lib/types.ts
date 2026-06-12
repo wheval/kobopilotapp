@@ -20,6 +20,7 @@ export type WatchlistItem = {
   symbol: string;
   name: string;
   price: number;
+  previousClose?: number;
   change: number;
   changePercent: number;
   sparkline: number[];

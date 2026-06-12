@@ -15,7 +15,7 @@ export function MobileStickyCta({
   return (
     <div
       className={cn(
-        "fixed inset-x-0 z-30 border-t-2 border-hairline-strong bg-paper/95 p-4 backdrop-blur-md md:hidden",
+        "fixed inset-x-0 z-30 border-t-2 border-hairline-strong bg-paper p-4 md:hidden",
         "bottom-[calc(var(--app-tabbar-h)+env(safe-area-inset-bottom,0px))]",
         className
       )}
@@ -26,5 +26,11 @@ export function MobileStickyCta({
 }
 
 export function MobileScrollSpacer() {
-  return <div className="h-24 md:hidden" aria-hidden />;
+  return (
+    <div
+      className="md:hidden"
+      style={{ height: "calc(var(--app-sticky-cta-h) + 1rem)" }}
+      aria-hidden
+    />
+  );
 }

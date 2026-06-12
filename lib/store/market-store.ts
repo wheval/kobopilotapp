@@ -2,7 +2,7 @@
 
 import { create } from "zustand";
 
-import type { MarketSource } from "@/lib/market/types";
+import type { MarketProvider, MarketSource } from "@/lib/market/types";
 import { NGX_SEED_STOCKS } from "@/lib/market/ngx-seed";
 import type { WatchlistItem } from "@/lib/types";
 
@@ -10,6 +10,7 @@ type MarketState = {
   quotes: WatchlistItem[];
   quotesBySymbol: Record<string, WatchlistItem>;
   source: MarketSource;
+  provider: MarketProvider;
   updatedAt: number | null;
   isLoading: boolean;
   pollId: ReturnType<typeof setInterval> | null;
@@ -27,7 +28,8 @@ export const useMarketStore = create<MarketState>((set, get) => ({
   quotes: NGX_SEED_STOCKS,
   quotesBySymbol: indexQuotes(NGX_SEED_STOCKS),
   source: "simulated",
-  updatedAt: null,
+  provider: "simulated",
+  updatedAt: Date.now(),
   isLoading: false,
   pollId: null,
 
@@ -39,12 +41,14 @@ export const useMarketStore = create<MarketState>((set, get) => ({
       const data = (await response.json()) as {
         quotes: WatchlistItem[];
         source: MarketSource;
+        provider: MarketProvider;
         updatedAt: number;
       };
       set({
         quotes: data.quotes,
         quotesBySymbol: indexQuotes(data.quotes),
         source: data.source,
+        provider: data.provider,
         updatedAt: data.updatedAt,
         isLoading: false,
       });

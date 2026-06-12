@@ -13,11 +13,12 @@ import {
   OnboardingFlow,
 } from "@/components/app/onboarding-flow";
 import { AppTour } from "@/components/app/app-tour";
+import { SocialShareSection } from "@/components/app/social-share";
 import { KoboMascot } from "@/components/mascot/kobo-mascot";
 import { DuoButton } from "@/components/ui/duo-button";
 import { formatNgn } from "@/lib/format-currency";
 import { lessons } from "@/lib/lessons";
-import { useProgressStore } from "@/lib/store/progress-store";
+import { useProgressHydrated, useProgressStore } from "@/lib/store/progress-store";
 import { useTradingStore } from "@/lib/store/trading-store";
 
 export default function DashboardPage() {
@@ -34,9 +35,14 @@ export default function DashboardPage() {
   const tradeCount = useTradingStore((s) => s.trades.length);
 
   const [replayIntro, setReplayIntro] = useState(false);
-  const showOnboarding = replayIntro || !onboardingComplete;
+  const progressHydrated = useProgressHydrated();
+  const showOnboarding =
+    progressHydrated && (replayIntro || !onboardingComplete);
   const showAppTour =
-    onboardingComplete && !appTourComplete && !showOnboarding;
+    progressHydrated &&
+    onboardingComplete &&
+    !appTourComplete &&
+    !showOnboarding;
 
   const mascotSpeech =
     !onboardingComplete && !showOnboarding
@@ -52,9 +58,9 @@ export default function DashboardPage() {
       )}
       {showAppTour && <AppTour />}
 
-      <div className="mx-auto max-w-2xl space-y-5 pb-8">
+      <div className="mx-auto max-w-2xl space-y-5 px-1 pb-2 pt-3 lg:p-8 ">
         {/* Hero card */}
-        <section className="overflow-hidden rounded-xl border-2 border-b-4 border-hairline-strong bg-paper shadow-soft-lift">
+        <section className="micro-card animate-fade-up overflow-hidden rounded-xl border-2 border-b-4 border-hairline-strong bg-paper shadow-soft-lift">
           <div className="bg-canvas px-5 py-6">
             <div className="flex flex-col items-center gap-4 sm:flex-row sm:items-start sm:text-left">
               <KoboMascot mood="happy" size="md" speech={mascotSpeech} />
@@ -112,7 +118,7 @@ export default function DashboardPage() {
 
         {/* Next up */}
         {nextLesson && (
-          <section className="rounded-xl border-2 border-b-4 border-[#84d8ff] border-b-[#1899d6] bg-[#ddf4ff]/50 p-5">
+          <section className="micro-card animate-fade-up rounded-xl border-2 border-b-4 border-[#84d8ff] border-b-[#1899d6] bg-[#ddf4ff]/50 p-5">
             <p className="text-xs font-bold uppercase text-[#1899d6]">up next</p>
             <p className="mt-1 text-xl font-extrabold lowercase text-ink">
               {nextLesson.title.toLowerCase()}
@@ -138,6 +144,9 @@ export default function DashboardPage() {
             icon={<LineChart className="size-5 text-primary" />}
           />
         </div>
+
+        {/* Share & invite */}
+        {onboardingComplete && !showOnboarding && <SocialShareSection />}
 
         {/* Quick links */}
         <section className="space-y-3">
@@ -194,7 +203,7 @@ function StatCard({
 
   return (
     <div
-      className={`rounded-xl border-2 border-b-4 p-4 ${styles[accent]}`}
+      className={`micro-card rounded-xl border-2 border-b-4 p-4 ${styles[accent]}`}
     >
       <div className="flex items-center justify-between">
         <p className="text-[10px] font-bold uppercase opacity-80">{label}</p>

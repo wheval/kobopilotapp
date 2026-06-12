@@ -67,7 +67,7 @@ export function AppSidebar() {
         </nav>
         <div className="border-t border-white/10 p-4">
           <p className="text-xs lowercase text-on-ink/60">
-            guest mode · progress saved on this device
+            guest mode · add a profile to share your card
           </p>
         </div>
       </aside>
@@ -110,7 +110,7 @@ export function AppSidebar() {
                   className={cn(
                     "flex size-11 items-center justify-center rounded-xl border-2 border-b-4 transition-all duration-100",
                     active
-                      ? "border-b-[#46a302] bg-[#d7ffb8] text-[#58cc02]"
+                      ? "scale-105 border-b-[#46a302] bg-[#d7ffb8] text-[#58cc02]"
                       : "border-transparent border-b-transparent bg-transparent",
                     "active:translate-y-0.5 active:border-b-2"
                   )}

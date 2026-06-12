@@ -1,43 +1,127 @@
 "use client";
 
-import { useState } from "react";
 import Link from "next/link";
+import { useState } from "react";
 
+import {
+  MobileScrollSpacer,
+  MobileStickyCta,
+} from "@/components/app/mobile-sticky-cta";
+import { PageShell } from "@/components/app/page-shell";
 import { KoboMascot, type MascotMood } from "@/components/mascot/kobo-mascot";
 import {
   DuoButton,
   DuoSelectButton,
   type DuoSelectState,
 } from "@/components/ui/duo-button";
-import {
-  MobileScrollSpacer,
-  MobileStickyCta,
-} from "@/components/app/mobile-sticky-cta";
-import { isLessonUnlocked, lessons } from "@/lib/lessons";
 import { hapticError, hapticSuccess } from "@/lib/haptics";
+import { isLessonUnlocked, lessons } from "@/lib/lessons";
+import {
+  optionLabel,
+  scoreHeadline,
+  scoreMascotSpeech,
+  shuffleQuestionOptions,
+} from "@/lib/quiz-utils";
 import { useProgressStore } from "@/lib/store/progress-store";
 import { cn } from "@/lib/utils";
+
+export function QuizCompleteScreen({
+  score,
+  correctCount,
+  totalQuestions,
+  nextLessonHref,
+  variant = "fresh",
+}: {
+  score: number;
+  correctCount: number;
+  totalQuestions: number;
+  nextLessonHref?: string;
+  variant?: "fresh" | "review";
+}) {
+  const headline = scoreHeadline(score);
+  const speech =
+    variant === "review"
+      ? `you scored ${score}% last time!`
+      : scoreMascotSpeech(score);
+
+  return (
+    <PageShell size="md">
+      <div className="flex flex-col items-center gap-6 text-center">
+        <KoboMascot mood="celebrate" size="xl" speech={speech} />
+
+        <div className="w-full rounded-2xl border-2 border-b-4 border-hairline-strong bg-paper p-6 shadow-soft-lift sm:p-8">
+          <p className="text-xs font-bold uppercase tracking-wide text-ink-soft">
+            {variant === "review" ? "lesson complete" : "quiz complete"}
+          </p>
+          <p className="mt-2 text-2xl font-extrabold lowercase text-ink">
+            {headline}
+          </p>
+          <p className="mt-4 text-5xl font-extrabold tabular-nums text-[#58cc02] sm:text-6xl animate-score-pop">
+            {score}%
+          </p>
+          <p className="mt-3 text-sm font-semibold lowercase text-ink-soft">
+            you got {correctCount} of {totalQuestions} questions right
+          </p>
+        </div>
+
+        <div className="hidden w-full space-y-2 md:block">
+          {nextLessonHref ? (
+            <DuoButton href={nextLessonHref} fullWidth size="lg">
+              next lesson
+            </DuoButton>
+          ) : (
+            <DuoButton href="/practice" variant="success" fullWidth size="lg">
+              start paper trading
+            </DuoButton>
+          )}
+          <DuoButton href="/learn" variant="secondary" fullWidth size="lg">
+            back to path
+          </DuoButton>
+        </div>
+      </div>
+
+      <MobileStickyCta className="space-y-2">
+        {nextLessonHref ? (
+          <DuoButton href={nextLessonHref} fullWidth size="lg">
+            next lesson
+          </DuoButton>
+        ) : (
+          <DuoButton href="/practice" variant="success" fullWidth size="lg">
+            start paper trading
+          </DuoButton>
+        )}
+        <DuoButton href="/learn" variant="secondary" fullWidth size="lg">
+          back to path
+        </DuoButton>
+      </MobileStickyCta>
+      <MobileScrollSpacer />
+    </PageShell>
+  );
+}
 
 export function QuizBlock({
   lessonId,
   onComplete,
 }: {
   lessonId: string;
-  onComplete: (score: number) => void;
+  onComplete: (score: number, correctCount: number) => void;
 }) {
   const lesson = lessons.find((l) => l.id === lessonId);
   const addXp = useProgressStore((s) => s.addXp);
 
+  const [questions] = useState(() =>
+    lesson ? lesson.quiz.map(shuffleQuestionOptions) : []
+  );
   const [questionIndex, setQuestionIndex] = useState(0);
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
   const [checked, setChecked] = useState(false);
   const [correctCount, setCorrectCount] = useState(0);
-  const [finished, setFinished] = useState(false);
 
-  if (!lesson) return null;
+  if (!lesson || questions.length === 0) return null;
 
-  const question = lesson.quiz[questionIndex];
-  const progress = ((questionIndex + (checked ? 1 : 0)) / lesson.quiz.length) * 100;
+  const question = questions[questionIndex];
+  const progress =
+    ((questionIndex + (checked ? 1 : 0)) / questions.length) * 100;
 
   const mascotMood: MascotMood = !checked
     ? "thinking"
@@ -49,7 +133,10 @@ export function QuizBlock({
     ? "pick the best answer!"
     : selectedIndex === question.correctIndex
       ? "yes! that's right!"
-      : "almost — keep going!";
+      : `correct answer is ${optionLabel(question.correctIndex)}!`;
+
+  const correctAnswerText =
+    question.options[question.correctIndex]?.toLowerCase() ?? "";
 
   function getOptionState(optionIndex: number): DuoSelectState {
     if (!checked) {
@@ -75,33 +162,21 @@ export function QuizBlock({
   };
 
   const handleContinue = () => {
-    if (questionIndex < lesson.quiz.length - 1) {
+    if (questionIndex < questions.length - 1) {
       setQuestionIndex((i) => i + 1);
       setSelectedIndex(null);
       setChecked(false);
       return;
     }
 
-    const finalScore = Math.round((correctCount / lesson.quiz.length) * 100);
-    setFinished(true);
+    const finalCorrect = correctCount;
+    const finalScore = Math.round((finalCorrect / questions.length) * 100);
     addXp(25);
-    onComplete(finalScore);
+    onComplete(finalScore, finalCorrect);
   };
 
-  if (finished) {
-    return (
-      <div className="flex flex-col items-center gap-6 py-8 text-center">
-        <KoboMascot mood="celebrate" size="xl" speech="lesson complete!" />
-        <p className="max-w-sm text-lg font-bold lowercase text-ink">
-          you scored {Math.round((correctCount / lesson.quiz.length) * 100)}% on
-          this quiz. nice work!
-        </p>
-      </div>
-    );
-  }
-
   return (
-    <>
+    <PageShell>
       <div className="space-y-6 pb-4 md:pb-0">
         <div className="h-3 overflow-hidden rounded-full bg-cloud">
           <div
@@ -119,16 +194,37 @@ export function QuizBlock({
             {question.question}
           </h3>
 
-          <div className="grid gap-3">
+          <div className="grid gap-3 md:grid-cols-2">
             {question.options.map((option, optionIndex) => (
               <DuoSelectButton
-                key={option}
+                key={`${question.id}-${option}`}
                 index={optionIndex}
                 state={getOptionState(optionIndex)}
                 onSelect={() => handleSelect(optionIndex)}
                 className="!min-h-[52px]"
               >
-                {option.toLowerCase()}
+                <span className="flex items-center gap-3 normal-case">
+                  <span
+                    className={cn(
+                      "flex size-9 shrink-0 items-center justify-center rounded-lg border-2 border-b-4 text-sm font-extrabold uppercase transition-transform duration-150",
+                      !checked && "border-hairline-strong bg-canvas text-ink-soft",
+                      checked &&
+                        optionIndex === question.correctIndex &&
+                        "scale-110 animate-pill-bump border-success border-b-success bg-success text-white",
+                      checked &&
+                        selectedIndex === optionIndex &&
+                        optionIndex !== question.correctIndex &&
+                        "border-destructive border-b-destructive bg-destructive text-white",
+                      checked &&
+                        optionIndex !== question.correctIndex &&
+                        optionIndex !== selectedIndex &&
+                        "border-hairline bg-canvas text-ink-soft opacity-60"
+                    )}
+                  >
+                    {optionLabel(optionIndex)}
+                  </span>
+                  <span className="lowercase">{option.toLowerCase()}</span>
+                </span>
               </DuoSelectButton>
             ))}
           </div>
@@ -136,13 +232,18 @@ export function QuizBlock({
           {checked && (
             <div
               className={cn(
-                "animate-fade-up rounded-xl border-2 border-b-4 p-4 text-sm font-semibold lowercase",
+                "animate-pop-in space-y-2 rounded-xl border-2 border-b-4 p-4 text-sm font-semibold lowercase",
                 selectedIndex === question.correctIndex
                   ? "border-success border-b-success bg-[#d7ffb8] text-success"
                   : "border-destructive border-b-destructive bg-[#ffdfe0] text-destructive"
               )}
             >
-              {question.explanation.toLowerCase()}
+              <p className="font-extrabold">
+                {selectedIndex === question.correctIndex
+                  ? `correct! ${optionLabel(question.correctIndex)} is right.`
+                  : `correct answer is ${optionLabel(question.correctIndex)}: ${correctAnswerText}`}
+              </p>
+              <p>{question.explanation.toLowerCase()}</p>
             </div>
           )}
         </div>
@@ -157,7 +258,7 @@ export function QuizBlock({
               }
               onClick={handleContinue}
             >
-              continue
+              {questionIndex < questions.length - 1 ? "continue" : "see my score"}
             </DuoButton>
           </div>
         )}
@@ -173,12 +274,12 @@ export function QuizBlock({
             }
             onClick={handleContinue}
           >
-            continue
+            {questionIndex < questions.length - 1 ? "continue" : "see my score"}
           </DuoButton>
         </MobileStickyCta>
       )}
       {checked && <MobileScrollSpacer />}
-    </>
+    </PageShell>
   );
 }
 

@@ -320,6 +320,150 @@ export const lessons: Lesson[] = [
       },
     ],
   },
+  {
+    id: "ngx-basics",
+    order: 6,
+    title: "NGX market basics",
+    summary: "How Nigeria's stock exchange works and what moves the ASI.",
+    sections: [
+      {
+        heading: "What is the NGX?",
+        body: "The Nigerian Exchange Group (NGX) is where shares of Nigerian companies trade. When you buy DANGCEM or ZENITHBANK, your order routes through a licensed broker to the exchange.",
+      },
+      {
+        heading: "Trading hours & the ASI",
+        body: "NGX trades Monday–Friday, roughly 9:00 AM to 4:00 PM WAT. The All-Share Index (ASI) tracks the overall market — when it rises, most listed stocks tend to move up together.",
+      },
+      {
+        heading: "Boards and sectors",
+        body: "Companies sit on Premium, Main, or Growth boards. Banks, cement, telcos, and oil & gas dominate market cap. Sector trends often matter as much as single-stock news.",
+      },
+    ],
+    takeaways: [
+      "NGX is Nigeria's main equity market.",
+      "The ASI shows broad market direction.",
+      "Sector context helps you read individual moves.",
+    ],
+    quiz: [
+      {
+        id: "q6-1",
+        question: "NGX trading mainly happens on…",
+        options: ["Weekends only", "Weekdays during market hours", "Only at midnight", "Only during holidays"],
+        correctIndex: 1,
+        explanation: "NGX follows a weekday schedule with defined market hours.",
+      },
+      {
+        id: "q6-2",
+        question: "The ASI measures…",
+        options: ["One company's revenue", "Overall market direction", "Your portfolio balance", "Bank interest rates"],
+        correctIndex: 1,
+        explanation: "The All-Share Index tracks the broad NGX market.",
+      },
+      {
+        id: "q6-3",
+        question: "To buy an NGX stock you need…",
+        options: ["Direct access to the exchange floor", "A licensed broker or platform", "Government approval each time", "Only foreign currency"],
+        correctIndex: 1,
+        explanation: "Retail investors trade through licensed brokers and apps.",
+      },
+    ],
+  },
+  {
+    id: "dividends-on-ngx",
+    order: 7,
+    title: "Dividends on NGX",
+    summary: "How Nigerian companies pay shareholders and what to watch for.",
+    sections: [
+      {
+        heading: "What is a dividend?",
+        body: "A dividend is cash some profitable companies pay shareholders — usually in naira per share. Banks and consumer giants on NGX are common dividend payers.",
+      },
+      {
+        heading: "Ex-dividend date",
+        body: "You must own shares before the ex-dividend date to receive the payout. After that date, the stock often drops by roughly the dividend amount.",
+      },
+      {
+        heading: "Yield vs growth",
+        body: "High dividend yield can mean steady income, but very high yields sometimes signal trouble. Balance dividend stocks with growth names in your paper portfolio.",
+      },
+    ],
+    takeaways: [
+      "Dividends are profit shared with shareholders.",
+      "Ex-dividend date determines who gets paid.",
+      "Yield is one factor — not the only one.",
+    ],
+    quiz: [
+      {
+        id: "q7-1",
+        question: "A dividend is…",
+        options: ["A loan to the company", "Cash paid to shareholders", "A type of market order", "A chart pattern"],
+        correctIndex: 1,
+        explanation: "Dividends return cash to shareholders from company profits.",
+      },
+      {
+        id: "q7-2",
+        question: "To receive a declared dividend you must own shares…",
+        options: ["After the ex-dividend date", "Before the ex-dividend date", "Only on weekends", "Never"],
+        correctIndex: 1,
+        explanation: "Ownership before ex-dividend date qualifies you for the payout.",
+      },
+      {
+        id: "q7-3",
+        question: "Dividend yield tells you…",
+        options: ["CEO age", "Income relative to share price", "Trading volume", "Broker fees"],
+        correctIndex: 1,
+        explanation: "Yield compares annual dividend to the current share price.",
+      },
+    ],
+  },
+  {
+    id: "news-and-filings",
+    order: 8,
+    title: "News & company filings",
+    summary: "Read NGX headlines and disclosures without getting overwhelmed.",
+    sections: [
+      {
+        heading: "Price vs news",
+        body: "Headlines move sentiment fast — earnings beats, dividend announcements, and regulatory news can spike volume. Not every headline deserves a trade.",
+      },
+      {
+        heading: "Corporate disclosures",
+        body: "Listed companies file material events with NGX: results, rights issues, board changes. These are more reliable than random social media tips.",
+      },
+      {
+        heading: "Build a simple routine",
+        body: "Check the ASI direction, scan your watchlist, read one disclosure on a holding, then decide if your paper thesis still holds. Consistency beats reacting to every alert.",
+      },
+    ],
+    takeaways: [
+      "News moves prices but isn't always actionable.",
+      "Official filings beat rumours.",
+      "A simple review routine reduces impulsive trades.",
+    ],
+    quiz: [
+      {
+        id: "q8-1",
+        question: "Corporate disclosures are useful because they…",
+        options: ["Guarantee profits", "Come from official company filings", "Replace all research", "Only appear on weekends"],
+        correctIndex: 1,
+        explanation: "Disclosures are regulated, official updates from listed companies.",
+      },
+      {
+        id: "q8-2",
+        question: "Before trading on a headline you should…",
+        options: ["Ignore your plan", "Check if it changes your thesis", "Always double position size", "Never read charts"],
+        correctIndex: 1,
+        explanation: "Ask whether the news actually changes your reason for owning the stock.",
+      },
+      {
+        id: "q8-3",
+        question: "A healthy review routine includes…",
+        options: ["Only social media", "Market direction + holdings check", "Deleting trade history", "Trading every rumour"],
+        correctIndex: 1,
+        explanation: "Combine market context with a quick look at your positions.",
+      },
+    ],
+  },
 ];
 
 export function getLessonById(id: string): Lesson | undefined {

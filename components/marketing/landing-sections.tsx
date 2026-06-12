@@ -1,5 +1,6 @@
 import { ArrowRight, Sparkles } from "lucide-react";
 
+import { AnimatedStat } from "@/components/marketing/animated-stats";
 import { KoboMascot } from "@/components/mascot/kobo-mascot";
 import { DuoButton } from "@/components/ui/duo-button";
 
@@ -23,8 +24,8 @@ export function Hero() {
             learn. practice. trade.
           </h1>
           <p className="max-w-xl text-body-lg lowercase text-ink-soft">
-            bite-sized lessons, instant quizzes, and a paper-trading playground —
-            just like your favorite language app, but for the markets.
+            bite-sized ngx lessons, instant quizzes, live charts, and ₦ paper
+            trading — built for nigerian stocks from day one.
           </p>
           <div className="flex flex-wrap gap-3">
             <DuoButton href="/dashboard" size="lg" variant="success">
@@ -44,20 +45,15 @@ export function Hero() {
 export function SocialProof() {
   const stats = [
     { value: "12k+", label: "lessons done" },
-    { value: "4.8k", label: "learners" },
+    { value: "4.8k", label: "ngx learners" },
     { value: "89k+", label: "paper trades" },
   ];
 
   return (
     <section className="border-y-2 border-hairline bg-paper">
-      <div className="mx-auto grid max-w-7xl gap-8 px-4 py-12 sm:grid-cols-3 sm:px-6 lg:px-8">
+      <div className="mx-auto grid max-w-7xl gap-10 px-4 py-16 sm:grid-cols-3 sm:px-6 lg:px-8 lg:py-20">
         {stats.map((stat) => (
-          <div key={stat.label} className="text-center">
-            <p className="text-display-sm lowercase text-ink">{stat.value}</p>
-            <p className="mt-1 text-sm font-bold lowercase text-ink-soft">
-              {stat.label}
-            </p>
-          </div>
+          <AnimatedStat key={stat.label} value={stat.value} label={stat.label} />
         ))}
       </div>
     </section>
@@ -79,7 +75,7 @@ export function Features() {
     {
       title: "paper trading",
       description:
-        "buy and sell with play money. zero stress, all skill-building.",
+        "buy ngx stocks with ₦ play cash and watch live charts update in real time.",
     },
     {
       title: "xp & streaks",

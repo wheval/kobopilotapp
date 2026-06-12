@@ -66,6 +66,7 @@
   --ink: #0c231a;
   --app-header-h: 3.5rem;
   --app-tabbar-h: 4.25rem;
+  --app-sticky-cta-h: 5.5rem;
   --ink-soft: #80a39e;
   --on-ink: #ffffff;
   --canvas: #f4ede4;
@@ -120,12 +121,13 @@
   * {
     @apply border-border outline-ring/50;
   }
-  body {
-    @apply bg-background text-foreground;
-  }
   html {
     @apply scroll-smooth font-sans;
     -webkit-tap-highlight-color: transparent;
+    overflow-x: hidden;
+  }
+  body {
+    @apply bg-background text-foreground overflow-x-hidden;
   }
   a,
   button,
@@ -251,6 +253,41 @@
   }
 }
 
+@keyframes pop-in {
+  from {
+    opacity: 0;
+    transform: scale(0.94) translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+@keyframes score-pop {
+  0% {
+    opacity: 0;
+    transform: scale(0.55);
+  }
+  65% {
+    transform: scale(1.1);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes pill-bump {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.06);
+  }
+}
+
 .animate-float {
   animation: float 3s ease-in-out infinite;
 }
@@ -273,4 +310,86 @@
 
 .animate-sparkle {
   animation: sparkle 1.2s ease-in-out infinite;
+}
+
+.animate-pop-in {
+  animation: pop-in 0.32s var(--ease-standard) both;
+}
+
+.animate-score-pop {
+  animation: score-pop 0.55s cubic-bezier(0.34, 1.45, 0.64, 1) both;
+}
+
+.animate-pill-bump {
+  animation: pill-bump 0.35s var(--ease-standard);
+}
+
+.micro-press {
+  transition: transform var(--motion-fast) var(--ease-standard);
+  touch-action: manipulation;
+}
+
+.micro-press:active {
+  transform: translateY(2px) scale(0.98);
+}
+
+.micro-card {
+  transition:
+    transform var(--motion-fast) var(--ease-standard),
+    box-shadow var(--motion-base) var(--ease-standard);
+}
+
+@media (hover: hover) {
+  .micro-card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-soft-lift);
+  }
+}
+
+.micro-card:active {
+  transform: translateY(1px) scale(0.995);
+}
+
+.micro-stagger > * {
+  animation: pop-in 0.32s var(--ease-standard) both;
+}
+
+.micro-stagger > *:nth-child(1) {
+  animation-delay: 0ms;
+}
+.micro-stagger > *:nth-child(2) {
+  animation-delay: 45ms;
+}
+.micro-stagger > *:nth-child(3) {
+  animation-delay: 90ms;
+}
+.micro-stagger > *:nth-child(4) {
+  animation-delay: 135ms;
+}
+.micro-stagger > *:nth-child(5) {
+  animation-delay: 180ms;
+}
+.micro-stagger > *:nth-child(6) {
+  animation-delay: 225ms;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-float,
+  .animate-bounce-soft,
+  .animate-wiggle,
+  .animate-shake,
+  .animate-fade-up,
+  .animate-sparkle,
+  .animate-pop-in,
+  .animate-score-pop,
+  .animate-pill-bump,
+  .micro-stagger > * {
+    animation: none !important;
+  }
+
+  .micro-press:active,
+  .micro-card:hover,
+  .micro-card:active {
+    transform: none;
+  }
 }

@@ -1,5 +1,6 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
+import { useEffect, useState } from "react";
 
 import { lessons } from "@/lib/lessons";
 
@@ -61,8 +62,11 @@ export const useProgressStore = create<ProgressState>()(
       },
 
       completeOnboarding: (goal) => {
+        const alreadyComplete = get().onboardingComplete;
         set({ onboardingComplete: true, learningGoal: goal });
-        get().addXp(20);
+        if (!alreadyComplete) {
+          get().addXp(20);
+        }
       },
 
       completeAppTour: () => {
@@ -107,3 +111,21 @@ export const useProgressStore = create<ProgressState>()(
     { name: "kobopilot-progress" }
   )
 );
+
+/** Wait for localStorage before reading onboarding/tour flags (prevents modal flash). */
+export function useProgressHydrated(): boolean {
+  const [hydrated, setHydrated] = useState(
+    () =>
+      typeof window !== "undefined" &&
+      useProgressStore.persist.hasHydrated()
+  );
+
+  useEffect(() => {
+    if (hydrated) return;
+    return useProgressStore.persist.onFinishHydration(() => {
+      setHydrated(true);
+    });
+  }, [hydrated]);
+
+  return hydrated;
+}
