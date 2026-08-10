@@ -55,7 +55,7 @@ function extractStocks(payload: unknown): TroveStock[] {
 export async function fetchTroveNgxQuotes(
   apiKey: string,
   baseUrl = "https://api.trovefinance.com",
-  path = process.env.TROVE_NGX_STOCKS_PATH ?? "/api/v1/market/stocks",
+  path = process.env.TROVE_NGX_STOCKS_PATH || "/api/v1/market/stocks",
   symbols: string[] = NGX_SYMBOLS
 ): Promise<WatchlistItem[]> {
   const url = new URL(path, baseUrl.replace(/\/$/, ""));

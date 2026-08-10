@@ -17,7 +17,8 @@ export default function PracticePage() {
             paper trading
           </h1>
           <p className="mt-1 text-sm lowercase text-ink-soft">
-            live ngx charts, ₦1,000,000 play cash — prices refresh every 30s.
+            real ngx prices, ₦1,000,000 play cash — switch to demo mode to watch a
+            simulated chart move.
           </p>
         </div>
       </div>
@@ -27,7 +28,9 @@ export default function PracticePage() {
       </div>
 
       <div className="grid min-w-0 gap-6 lg:grid-cols-3">
-        <div className="space-y-6 lg:col-span-2">
+        {/* min-w-0: grid items default to min-width:auto, so a long company name in the
+            watchlist stretches the column past the viewport and gets clipped. */}
+        <div className="min-w-0 space-y-6 lg:col-span-2">
           <Watchlist />
           <OrderForm />
         </div>

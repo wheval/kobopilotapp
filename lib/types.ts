@@ -24,6 +24,13 @@ export type WatchlistItem = {
   change: number;
   changePercent: number;
   sparkline: number[];
+  /** Present only on live NGXPulse quotes; absent on simulated ones. */
+  volume?: number;
+  marketCap?: number;
+  sector?: string;
+  changePercent7d?: number;
+  /** YYYY-MM-DD of the session this price came from. */
+  tradeDate?: string;
 };
 
 export type Holding = {

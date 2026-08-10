@@ -23,8 +23,3 @@ export function explainDailyMove(quote: WatchlistItem): string {
   return `${symbol} is ${direction} ${Math.abs(changePercent).toFixed(2)}% today. Yesterday's close: ${formatNgn(previousClose)} → now: ${formatNgn(price)}. ${moveLine} Remember: one day's move doesn't tell the whole story — check volume and news too.`;
 }
 
-export function formatDailyComparison(quote: WatchlistItem): string {
-  const previousClose = getPreviousClose(quote);
-  const sign = quote.change >= 0 ? "+" : "";
-  return `yesterday ${formatNgn(previousClose)} → today ${formatNgn(quote.price)} (${sign}${quote.changePercent.toFixed(2)}%)`;
-}
