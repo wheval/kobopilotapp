@@ -3,10 +3,9 @@ import { persist } from "zustand/middleware";
 
 import { formatNgn } from "@/lib/format-currency";
 import { NGX_SEED_STOCKS } from "@/lib/market/ngx-seed";
+import { PAPER_STARTING_CASH } from "@/lib/paper-trading";
 import { useMarketStore } from "@/lib/store/market-store";
 import type { Holding, OrderSide, Trade } from "@/lib/types";
-
-const INITIAL_CASH = 1_000_000;
 
 type TradingState = {
   cash: number;
@@ -28,7 +27,7 @@ type TradingState = {
 
 function createInitialState() {
   return {
-    cash: INITIAL_CASH,
+    cash: PAPER_STARTING_CASH,
     holdings: [] as Holding[],
     trades: [] as Trade[],
     selectedSymbol: NGX_SEED_STOCKS[0]?.symbol ?? "DANGCEM",
@@ -159,7 +158,7 @@ export const useTradingStore = create<TradingState>()(
       },
 
       getTotalPnL: () => {
-        return get().getPortfolioValue() - INITIAL_CASH;
+        return get().getPortfolioValue() - PAPER_STARTING_CASH;
       },
 
       resetPortfolio: () => set(createInitialState()),

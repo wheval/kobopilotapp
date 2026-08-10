@@ -1,24 +1,36 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
-import { MessageCircle, Send, Sparkles, X } from "lucide-react";
+import { useChat } from "@ai-sdk/react";
+import {
+  DefaultChatTransport,
+  getToolName,
+  isToolUIPart,
+  type UIMessage,
+} from "ai";
+import { MessageCircle, RotateCcw, Send, Sparkles, Square, X } from "lucide-react";
 
 import { KoboMascot } from "@/components/mascot/kobo-mascot";
 import { DuoButton } from "@/components/ui/duo-button";
-import { explainDailyMove } from "@/lib/market/quote-utils";
+import { buildChatContext } from "@/lib/ai/client-context";
+import { MAX_MESSAGE_CHARS } from "@/lib/ai/limits";
+import { chartWelcomeMessage, mockReply } from "@/lib/ai/mock-reply";
 import { hapticPress, hapticTap } from "@/lib/haptics";
+import {
+  useChatHistoryHydrated,
+  useChatHistoryStore,
+  type StoredChatMessage,
+} from "@/lib/store/chat-history-store";
 import { useChatStore } from "@/lib/store/chat-store";
 import { useMarketStore } from "@/lib/store/market-store";
 import { useTradingStore } from "@/lib/store/trading-store";
-import type { WatchlistItem } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
-type ChatMessage = {
-  id: string;
-  role: "user" | "assistant";
-  text: string;
-};
+const transport = new DefaultChatTransport({ api: "/api/chat" });
+
+const WELCOME_TEXT =
+  "hey! i'm kobo ai — ask me about ngx stocks, orders, or anything from your lessons.";
 
 const generalPrompts = [
   "what is ngx?",
@@ -36,51 +48,49 @@ function chartPrompts(symbol: string) {
   ];
 }
 
-function mockReply(
-  input: string,
-  quote: WatchlistItem | undefined,
-  chartMode: boolean
-): string {
-  const q = input.toLowerCase();
+/** What Kobo is doing while a tool runs, so the pause reads as work not lag. */
+const toolLabels: Record<string, string> = {
+  get_quote: "checking the price",
+  get_watchlist: "checking the watchlist",
+  get_portfolio: "checking your portfolio",
+  get_progress: "checking your progress",
+  list_lessons: "checking your lessons",
+  get_lesson: "checking your lessons",
+  lookup_glossary: "checking the glossary",
+};
 
-  if (
-    quote &&
-    (chartMode ||
-      q.includes("chart") ||
-      q.includes("yesterday") ||
-      q.includes("today") ||
-      q.includes("drop") ||
-      q.includes("down") ||
-      q.includes("fall") ||
-      q.includes("why") ||
-      q.includes("moving") ||
-      q.includes("dangote") ||
-      q.includes("dangcem"))
-  ) {
-    return explainDailyMove(quote);
-  }
-
-  if (q.includes("ngx"))
-    return "NGX is Nigeria's main stock exchange. On Kobopilot you paper-trade real tickers like DANGCEM, GTCO, and MTNN with ₦ play money.";
-  if (q.includes("bid") || q.includes("ask"))
-    return "The bid is what buyers will pay; the ask is what sellers want. The gap between them is the spread. Trades happen when they meet in the middle.";
-  if (q.includes("dividend"))
-    return "Some NGX companies share profits with shareholders as dividends — cash paid per share. Check the glossary for examples in naira.";
-  if (q.includes("diversif"))
-    return "Don't put all your play cash in one stock. Spread across sectors — banks, cement, telcos — so one bad day doesn't wipe your paper portfolio.";
-  if (q.includes("chart") || q.includes("liveline"))
-    return "The practice chart uses Liveline — it smooths price updates so you can watch momentum arrows and time windows like a live trading feed.";
-  if (q.includes("buy") && quote)
-    return `I'm a coach, not financial advice! ${quote.symbol} is at ₦${quote.price.toLocaleString()} today. Paper-trade a small size first and see how your portfolio feels.`;
-
-  return "Great question! Try a lesson on the learn path, then practice with a small paper trade. Ask me about NGX, orders, dividends, or risk anytime.";
+function assistantMessage(id: string, text: string): UIMessage {
+  return { id, role: "assistant", parts: [{ type: "text", text }] };
 }
 
-function chartWelcomeMessage(symbol: string, quote: WatchlistItem | undefined) {
-  if (!quote) {
-    return `looking at ${symbol} on your chart — ask me why the price is moving, or how to read the liveline!`;
+function messageText(message: UIMessage): string {
+  return message.parts
+    .map((part) => (part.type === "text" ? part.text : ""))
+    .join("");
+}
+
+function toStored(message: UIMessage): StoredChatMessage | null {
+  if (message.role !== "user" && message.role !== "assistant") return null;
+  const text = messageText(message);
+  if (!text) return null;
+  return { id: message.id, role: message.role, text };
+}
+
+function fromStored(message: StoredChatMessage): UIMessage {
+  return {
+    id: message.id,
+    role: message.role,
+    parts: [{ type: "text", text: message.text }],
+  };
+}
+
+function runningToolLabel(message: UIMessage): string | null {
+  for (const part of message.parts) {
+    if (!isToolUIPart(part)) continue;
+    if (part.state === "output-available" || part.state === "output-error") continue;
+    return toolLabels[getToolName(part)] ?? "looking that up";
   }
-  return `looking at ${symbol} on your chart. ${explainDailyMove(quote)} ask me anything about the move!`;
+  return null;
 }
 
 export function AiChatFab() {
@@ -95,25 +105,75 @@ export function AiChatFab() {
 
   const onPractice = pathname === "/practice";
   const chartMode = chatContext.mode === "chart" || onPractice;
-  const symbol = chatContext.symbol ?? (onPractice ? selectedSymbol : undefined);
+  // On practice the live watchlist selection wins. Preferring the symbol captured when
+  // the panel opened would pin the coach to a chart the user has since switched away
+  // from — and with per-symbol threads, strand the new symbol's transcript.
+  const symbol = onPractice ? selectedSymbol : chatContext.symbol;
 
-  const hasStickyCta =
+  const onLesson =
     pathname.startsWith("/learn/") && !pathname.endsWith("/glossary");
+  const lessonId = onLesson ? pathname.split("/")[2] : undefined;
+  const hasStickyCta = onLesson;
+
+  // One transcript per conversation subject: the general coach, and each chart symbol.
+  const threadKey = chartMode && symbol ? `chart:${symbol}` : "general";
+  const historyHydrated = useChatHistoryHydrated();
 
   const [input, setInput] = useState("");
-  const [messages, setMessages] = useState<ChatMessage[]>([
-    {
-      id: "welcome",
-      role: "assistant",
-      text: "hey! i'm kobo ai — ask me about ngx stocks, orders, or anything from your lessons.",
-    },
-  ]);
   const listRef = useRef<HTMLDivElement>(null);
-  const chartSeededRef = useRef<string | null>(null);
+  const loadedThreadRef = useRef<string | null>(null);
+  const stickToBottomRef = useRef(true);
+
+  const {
+    messages,
+    sendMessage,
+    setMessages,
+    regenerate,
+    stop,
+    status,
+    error,
+    clearError,
+  } = useChat({
+    transport,
+    // Coalesce token updates; without it every delta is a React render.
+    throttle: 50,
+    messages: [assistantMessage("welcome", WELCOME_TEXT)],
+  });
+
+  const busy = status === "submitted" || status === "streaming";
 
   const starterPrompts = useMemo(
     () => (chartMode && symbol ? chartPrompts(symbol) : generalPrompts),
     [chartMode, symbol]
+  );
+
+  const lastUserText = useMemo(() => {
+    const lastUser = [...messages].reverse().find((m) => m.role === "user");
+    return lastUser ? messageText(lastUser) : "";
+  }, [messages]);
+
+  const requestBody = useCallback(
+    () => ({
+      context: buildChatContext({
+        mode: chartMode ? "chart" : "general",
+        symbol,
+        lessonId,
+      }),
+    }),
+    [chartMode, symbol, lessonId]
+  );
+
+  const send = useCallback(
+    (text: string) => {
+      const trimmed = text.trim().slice(0, MAX_MESSAGE_CHARS);
+      if (!trimmed || busy) return;
+
+      setInput("");
+      stickToBottomRef.current = true;
+      clearError();
+      void sendMessage({ text: trimmed }, { body: requestBody() });
+    },
+    [busy, clearError, requestBody, sendMessage]
   );
 
   useEffect(() => {
@@ -124,45 +184,69 @@ export function AiChatFab() {
     };
   }, [isOpen]);
 
+  // Only follow the stream while the user is already at the bottom — yanking them back
+  // mid-read is worse than a stale scroll position.
   useEffect(() => {
-    listRef.current?.scrollTo({ top: listRef.current.scrollHeight, behavior: "smooth" });
-  }, [messages, isOpen]);
+    if (!isOpen || !stickToBottomRef.current) return;
+    const list = listRef.current;
+    if (!list) return;
+    list.scrollTo({
+      top: list.scrollHeight,
+      behavior: status === "streaming" ? "auto" : "smooth",
+    });
+  }, [messages, isOpen, status, error]);
 
+  const welcomeMessage = useCallback(
+    () =>
+      chartMode && symbol
+        ? assistantMessage(
+            `chart-welcome-${symbol}`,
+            chartWelcomeMessage(symbol, getQuote(symbol))
+          )
+        : assistantMessage("welcome", WELCOME_TEXT),
+    [chartMode, symbol, getQuote]
+  );
+
+  // Load and save share one effect so their order is not a race: the pass that restores
+  // a thread returns before the save branch, which would otherwise write the previous
+  // thread's messages under the new key in the same commit.
   useEffect(() => {
     if (!isOpen) {
-      chartSeededRef.current = null;
+      loadedThreadRef.current = null;
+      return;
+    }
+    if (!historyHydrated) return;
+
+    const history = useChatHistoryStore.getState();
+
+    if (loadedThreadRef.current !== threadKey) {
+      loadedThreadRef.current = threadKey;
+      const stored = history.readThread(threadKey);
+      setMessages(stored.length > 0 ? stored.map(fromStored) : [welcomeMessage()]);
+      stickToBottomRef.current = true;
       return;
     }
 
-    if (chartMode && symbol && chartSeededRef.current !== symbol) {
-      chartSeededRef.current = symbol;
-      setMessages([
-        {
-          id: "chart-welcome",
-          role: "assistant",
-          text: chartWelcomeMessage(symbol, getQuote(symbol)),
-        },
-      ]);
-    }
-  }, [isOpen, chartMode, symbol, getQuote]);
+    if (status === "streaming") return;
+    // Don't persist an auto-seeded welcome — its price quote would greet them stale
+    // tomorrow. A thread becomes real once the user has actually said something.
+    if (!messages.some((message) => message.role === "user")) return;
 
-  const send = (text: string) => {
-    const trimmed = text.trim();
-    if (!trimmed) return;
-
-    const activeQuote = symbol ? getQuote(symbol) : undefined;
-
-    setMessages((prev) => [
-      ...prev,
-      { id: crypto.randomUUID(), role: "user", text: trimmed },
-      {
-        id: crypto.randomUUID(),
-        role: "assistant",
-        text: mockReply(trimmed, activeQuote, chartMode),
-      },
-    ]);
-    setInput("");
-  };
+    history.saveThread(
+      threadKey,
+      messages
+        .map(toStored)
+        .filter((message): message is StoredChatMessage => message !== null)
+    );
+  }, [
+    isOpen,
+    historyHydrated,
+    threadKey,
+    messages,
+    status,
+    setMessages,
+    welcomeMessage,
+  ]);
 
   const handleOpen = () => {
     if (onPractice && selectedSymbol) {
@@ -171,6 +255,28 @@ export function AiChatFab() {
     }
     openChat();
   };
+
+  const handleClear = () => {
+    hapticPress();
+    if (busy) stop();
+    useChatHistoryStore.getState().clearThread(threadKey);
+    clearError();
+    setMessages([welcomeMessage()]);
+    stickToBottomRef.current = true;
+  };
+
+  const handleScroll = () => {
+    const list = listRef.current;
+    if (!list) return;
+    stickToBottomRef.current =
+      list.scrollHeight - list.scrollTop - list.clientHeight < 80;
+  };
+
+  const lastMessage = messages[messages.length - 1];
+  const pendingTool =
+    lastMessage?.role === "assistant" ? runningToolLabel(lastMessage) : null;
+  const awaitingFirstToken =
+    status === "submitted" || (busy && lastMessage?.role === "user");
 
   return (
     <>
@@ -200,21 +306,38 @@ export function AiChatFab() {
               <div>
                 <p className="font-extrabold lowercase text-ink">kobo ai</p>
                 <p className="text-[10px] font-bold uppercase text-ink-soft">
-                  {chartMode && symbol ? `${symbol} chart coach` : "ngx coach · demo"}
+                  {chartMode && symbol ? `${symbol} chart coach` : "ngx coach"}
                 </p>
               </div>
             </div>
-            <button
-              type="button"
-              onClick={closeChat}
-              className="flex size-10 items-center justify-center rounded-xl border-2 border-hairline bg-canvas"
-              aria-label="Close chat"
-            >
-              <X className="size-5" />
-            </button>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={handleClear}
+                className="micro-press flex size-10 items-center justify-center rounded-xl border-2 border-hairline bg-canvas text-ink-soft"
+                aria-label="Start a new chat"
+                title="start a new chat"
+              >
+                <RotateCcw className="size-4" />
+              </button>
+              <button
+                type="button"
+                onClick={closeChat}
+                className="flex size-10 items-center justify-center rounded-xl border-2 border-hairline bg-canvas"
+                aria-label="Close chat"
+              >
+                <X className="size-5" />
+              </button>
+            </div>
           </div>
 
-          <div ref={listRef} className="flex-1 space-y-3 overflow-y-auto overscroll-contain p-4">
+          <div
+            ref={listRef}
+            onScroll={handleScroll}
+            className="flex-1 space-y-3 overflow-y-auto overscroll-contain p-4"
+            aria-live="polite"
+            aria-busy={busy}
+          >
             <div className="flex justify-center pb-2">
               <KoboMascot
                 mood="happy"
@@ -222,19 +345,62 @@ export function AiChatFab() {
                 speech={chartMode ? "ask about the chart!" : "ask me anything!"}
               />
             </div>
-            {messages.map((msg) => (
-              <div
-                key={msg.id}
-                className={cn(
-                  "animate-pop-in max-w-[88%] rounded-2xl border-2 border-b-4 px-4 py-3 text-sm lowercase leading-relaxed",
-                  msg.role === "user"
-                    ? "ml-auto border-[#84d8ff] border-b-[#1899d6] bg-[#ddf4ff]"
-                    : "border-hairline-strong bg-paper text-ink-soft"
-                )}
-              >
-                {msg.text}
+
+            {messages.map((message) => {
+              const text = messageText(message);
+              if (!text) return null;
+
+              return (
+                <div
+                  key={message.id}
+                  className={cn(
+                    "animate-pop-in max-w-[88%] whitespace-pre-wrap rounded-2xl border-2 border-b-4 px-4 py-3 text-sm lowercase leading-relaxed",
+                    message.role === "user"
+                      ? "ml-auto border-[#84d8ff] border-b-[#1899d6] bg-[#ddf4ff]"
+                      : "border-hairline-strong bg-paper text-ink-soft"
+                  )}
+                >
+                  {text}
+                </div>
+              );
+            })}
+
+            {(awaitingFirstToken || pendingTool) && (
+              <div className="flex max-w-[88%] items-center gap-2 rounded-2xl border-2 border-b-4 border-hairline-strong bg-paper px-4 py-3">
+                <span className="flex gap-1" aria-hidden>
+                  <Dot delay="0ms" />
+                  <Dot delay="150ms" />
+                  <Dot delay="300ms" />
+                </span>
+                <span className="text-xs font-bold lowercase text-ink-soft">
+                  {pendingTool ?? "thinking"}
+                </span>
               </div>
-            ))}
+            )}
+
+            {error && (
+              <div className="animate-pop-in max-w-[88%] space-y-2 rounded-2xl border-2 border-b-4 border-hairline-strong bg-paper px-4 py-3 text-sm lowercase leading-relaxed text-ink-soft">
+                <p>
+                  {mockReply(
+                    lastUserText,
+                    symbol ? getQuote(symbol) : undefined,
+                    chartMode
+                  )}
+                </p>
+                <button
+                  type="button"
+                  onClick={() => {
+                    hapticPress();
+                    clearError();
+                    stickToBottomRef.current = true;
+                    void regenerate({ body: requestBody() });
+                  }}
+                  className="micro-press rounded-full border-2 border-hairline bg-canvas px-3 py-1 text-xs font-bold lowercase text-ink-soft hover:border-[#58cc02] hover:text-ink"
+                >
+                  try again
+                </button>
+              </div>
+            )}
           </div>
 
           <div
@@ -246,11 +412,12 @@ export function AiChatFab() {
                 <button
                   key={prompt}
                   type="button"
+                  disabled={busy}
                   onClick={() => {
                     hapticPress();
                     send(prompt);
                   }}
-                  className="micro-press rounded-full border-2 border-hairline bg-canvas px-3 py-1.5 text-xs font-bold lowercase text-ink-soft transition-colors hover:border-[#58cc02] hover:text-ink"
+                  className="micro-press rounded-full border-2 border-hairline bg-canvas px-3 py-1.5 text-xs font-bold lowercase text-ink-soft transition-colors hover:border-[#58cc02] hover:text-ink disabled:opacity-50"
                 >
                   {prompt}
                 </button>
@@ -267,19 +434,54 @@ export function AiChatFab() {
               <input
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
+                maxLength={MAX_MESSAGE_CHARS}
                 placeholder={
                   chartMode ? "ask about this chart…" : "ask about ngx trading…"
                 }
                 className="min-w-0 flex-1 rounded-xl border-2 border-b-4 border-hairline-strong bg-canvas px-4 py-3 text-sm font-semibold outline-none focus:border-[#58cc02] focus:border-b-[#58cc02]"
               />
-              <DuoButton type="submit" variant="success" size="sm" className="!px-4">
-                <Send className="size-4" />
-              </DuoButton>
+              {busy ? (
+                <DuoButton
+                  type="button"
+                  variant="secondary"
+                  size="sm"
+                  className="!px-4"
+                  onClick={() => {
+                    hapticPress();
+                    stop();
+                  }}
+                  aria-label="Stop generating"
+                >
+                  <Square className="size-4" />
+                </DuoButton>
+              ) : (
+                <DuoButton
+                  type="submit"
+                  variant="success"
+                  size="sm"
+                  className="!px-4"
+                  aria-label="Send message"
+                >
+                  <Send className="size-4" />
+                </DuoButton>
+              )}
             </form>
+            <p className="text-center text-[10px] font-bold lowercase text-ink-soft">
+              educational only · not financial advice
+            </p>
           </div>
         </div>
       )}
     </>
+  );
+}
+
+function Dot({ delay }: { delay: string }) {
+  return (
+    <span
+      className="size-1.5 animate-bounce rounded-full bg-ink-soft"
+      style={{ animationDelay: delay }}
+    />
   );
 }
 

@@ -82,7 +82,7 @@ export function Watchlist() {
                     <span className="shrink-0 font-extrabold uppercase text-ink">
                       {item.symbol}
                     </span>
-                    <span className="truncate text-xs font-semibold lowercase text-ink-soft">
+                    <span className="min-w-0 truncate text-xs font-semibold lowercase text-ink-soft">
                       {item.name}
                     </span>
                   </div>
@@ -223,10 +223,10 @@ export function PortfolioSummary() {
   const pnlPositive = pnl >= 0;
 
   return (
-    <div className="space-y-6">
-      <Card>
+    <div className="min-w-0 space-y-6">
+      <Card className="min-w-0">
         <CardHeader className="flex flex-row items-start justify-between">
-          <div>
+          <div className="min-w-0">
             <CardTitle className="text-ink">Portfolio</CardTitle>
             <CardDescription>NGX paper trading · ₦1M starting cash</CardDescription>
           </div>
