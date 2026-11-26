@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect } from "react";
 import { usePathname } from "next/navigation";
 import {
+  BookA,
   BookOpen,
   LayoutDashboard,
   LineChart,
@@ -14,15 +15,25 @@ import {
 import { AppStatPills } from "@/components/app/app-ui";
 import { Logo } from "@/components/marketing/site-chrome";
 import { hapticPress } from "@/lib/haptics";
+import { lockPageScroll } from "@/lib/scroll-lock";
 import { useProgressStore } from "@/lib/store/progress-store";
 import { useSidebarStore } from "@/lib/store/sidebar-store";
 import { cn } from "@/lib/utils";
 
 const navItems = [
-  { href: "/dashboard", label: "home", icon: LayoutDashboard },
-  { href: "/learn", label: "learn", icon: BookOpen },
-  { href: "/practice", label: "practice", icon: LineChart },
+  { href: "/dashboard", label: "home", tab: "home", icon: LayoutDashboard },
+  { href: "/learn", label: "lesson path", tab: "learn", icon: BookOpen },
+  { href: "/learn/glossary", label: "glossary", tab: "glossary", icon: BookA },
+  { href: "/practice", label: "practice", tab: "practice", icon: LineChart },
 ];
+
+/** The nav item that best matches the URL: /learn/glossary → glossary, not lesson path. */
+function activeNavHref(pathname: string): string | undefined {
+  return navItems
+    .map((item) => item.href)
+    .filter((href) => pathname === href || pathname.startsWith(`${href}/`))
+    .sort((a, b) => b.length - a.length)[0];
+}
 
 const SIDEBAR_WIDTH = "16rem";
 
@@ -92,7 +103,7 @@ function SidebarNavLinks({
   return (
     <>
       {navItems.map(({ href, label, icon: Icon }) => {
-        const active = pathname === href || pathname.startsWith(`${href}/`);
+        const active = href === activeNavHref(pathname);
         return (
           <Link
             key={href}
@@ -137,11 +148,7 @@ export function AppSidebar() {
 
   useEffect(() => {
     if (!mobileOpen) return;
-    const previous = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-    return () => {
-      document.body.style.overflow = previous;
-    };
+    return lockPageScroll();
   }, [mobileOpen]);
 
   useEffect(() => {
@@ -153,7 +160,7 @@ export function AppSidebar() {
       {/* Desktop sidebar */}
       <aside
         className={cn(
-          "app-sidebar-shell relative hidden shrink-0 overflow-hidden border-r-2 border-primary-deep bg-primary md:block",
+          "app-sidebar-shell hidden shrink-0 overflow-hidden border-r-2 border-primary-deep bg-primary md:sticky md:top-0 md:block md:h-dvh md:self-start",
           desktopOpen ? "w-64" : "w-0 border-r-transparent"
         )}
         aria-hidden={!desktopOpen}
@@ -172,7 +179,7 @@ export function AppSidebar() {
           <div className="border-b border-white/10 p-4">
             <AppStatPills streak={streak} xp={xp} />
           </div>
-          <nav className="flex flex-1 flex-col gap-2 p-4">
+          <nav className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto overscroll-contain p-4">
             <SidebarNavLinks pathname={pathname} tourTargets />
           </nav>
           <div className="border-t border-white/10 p-4">
@@ -243,20 +250,12 @@ export function AppSidebar() {
         aria-label="Main navigation"
       >
         <div className="flex h-[var(--app-tabbar-h)] items-stretch">
-          {navItems.map(({ href, label, icon: Icon }) => {
-            const active =
-              pathname === href || pathname.startsWith(`${href}/`);
+          {navItems.map(({ href, tab, icon: Icon }) => {
+            const active = href === activeNavHref(pathname);
             return (
               <Link
                 key={href}
                 href={href}
-                data-tour={
-                  href === "/learn"
-                    ? "nav-learn-tab"
-                    : href === "/practice"
-                      ? "nav-practice-tab"
-                      : undefined
-                }
                 onClick={() => {
                   hapticPress();
                   closeMobile();
@@ -268,18 +267,30 @@ export function AppSidebar() {
                   active ? "text-[#58cc02]" : "text-ink-soft"
                 )}
               >
+                {/* tight wrapper = the tour spotlights icon + label, not the whole column */}
                 <span
-                  className={cn(
-                    "flex size-11 items-center justify-center rounded-xl border-2 border-b-4 transition-all duration-100",
-                    active
-                      ? "scale-105 border-b-[#46a302] bg-[#d7ffb8] text-[#58cc02]"
-                      : "border-transparent border-b-transparent bg-transparent",
-                    "active:translate-y-0.5 active:border-b-2"
-                  )}
+                  data-tour={
+                    href === "/learn"
+                      ? "nav-learn-tab"
+                      : href === "/practice"
+                        ? "nav-practice-tab"
+                        : undefined
+                  }
+                  className="flex flex-col items-center gap-0.5"
                 >
-                  <Icon className="size-6" strokeWidth={active ? 2.5 : 2} />
+                  <span
+                    className={cn(
+                      "flex size-11 items-center justify-center rounded-xl border-2 border-b-4 transition-all duration-100",
+                      active
+                        ? "scale-105 border-b-[#46a302] bg-[#d7ffb8] text-[#58cc02]"
+                        : "border-transparent border-b-transparent bg-transparent",
+                      "active:translate-y-0.5 active:border-b-2"
+                    )}
+                  >
+                    <Icon className="size-6" strokeWidth={active ? 2.5 : 2} />
+                  </span>
+                  <span>{tab}</span>
                 </span>
-                <span>{label}</span>
               </Link>
             );
           })}
@@ -321,7 +332,8 @@ export function AppTopBar() {
         </div>
       </div>
       <div className="flex items-center gap-3">
-        <AppStatPills streak={streak} xp={xp} compact />
+        {/* the open sidebar already shows streak & xp; only repeat them when it's collapsed */}
+        {!desktopOpen && <AppStatPills streak={streak} xp={xp} compact />}
         <span className="rounded-xl border-2 border-b-4 border-[#46a302] bg-[#d7ffb8] px-3 py-1.5 text-xs font-extrabold uppercase text-[#58cc02]">
           paper mode
         </span>

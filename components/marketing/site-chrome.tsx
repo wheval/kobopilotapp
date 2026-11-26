@@ -39,19 +39,20 @@ export function MarketingNav() {
     <header className="sticky top-0 z-50 border-b-2 border-hairline bg-paper/95 backdrop-blur">
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
         <Logo />
-        <nav className="hidden items-center gap-2 md:flex">
-          <a
-            href="#features"
-            className="rounded-lg px-3 py-2 text-sm font-bold lowercase text-ink-soft transition-colors hover:bg-cloud hover:text-ink"
-          >
-            features
-          </a>
-          <a
-            href="#how-it-works"
-            className="rounded-lg px-3 py-2 text-sm font-bold lowercase text-ink-soft transition-colors hover:bg-cloud hover:text-ink"
-          >
-            how it works
-          </a>
+        <nav className="hidden items-center gap-1 md:flex" aria-label="Sections">
+          {[
+            { href: "#path", label: "lessons" },
+            { href: "#practice", label: "paper trading" },
+            { href: "#kobo", label: "ask kobo" },
+          ].map((link) => (
+            <a
+              key={link.href}
+              href={link.href}
+              className="rounded-lg px-3 py-2 text-sm font-bold lowercase text-ink/60 transition-colors hover:bg-cloud hover:text-ink"
+            >
+              {link.label}
+            </a>
+          ))}
         </nav>
         <div className="flex shrink-0 items-center gap-1.5 sm:gap-2">
           <DuoButton

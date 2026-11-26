@@ -2,6 +2,7 @@ import {
   MarketingFooter,
   MarketingNav,
 } from "@/components/marketing/site-chrome";
+import { SmoothScroll } from "@/components/marketing/smooth-scroll";
 
 export default function MarketingLayout({
   children,
@@ -10,6 +11,7 @@ export default function MarketingLayout({
 }) {
   return (
     <>
+      <SmoothScroll />
       <MarketingNav />
       {children}
       <MarketingFooter />

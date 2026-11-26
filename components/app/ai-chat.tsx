@@ -25,6 +25,7 @@ import {
 import { useChatStore } from "@/lib/store/chat-store";
 import { useMarketStore } from "@/lib/store/market-store";
 import { useTradingStore } from "@/lib/store/trading-store";
+import { lockPageScroll } from "@/lib/scroll-lock";
 import { cn } from "@/lib/utils";
 
 const transport = new DefaultChatTransport({ api: "/api/chat" });
@@ -102,6 +103,7 @@ export function AiChatFab() {
   const closeChat = useChatStore((s) => s.closeChat);
   const selectedSymbol = useTradingStore((s) => s.selectedSymbol);
   const getQuote = useMarketStore((s) => s.getQuote);
+  const marketSource = useMarketStore((s) => s.source);
 
   const onPractice = pathname === "/practice";
   const chartMode = chatContext.mode === "chart" || onPractice;
@@ -178,10 +180,7 @@ export function AiChatFab() {
 
   useEffect(() => {
     if (!isOpen) return;
-    document.body.style.overflow = "hidden";
-    return () => {
-      document.body.style.overflow = "";
-    };
+    return lockPageScroll();
   }, [isOpen]);
 
   // Only follow the stream while the user is already at the bottom — yanking them back
@@ -201,10 +200,10 @@ export function AiChatFab() {
       chartMode && symbol
         ? assistantMessage(
             `chart-welcome-${symbol}`,
-            chartWelcomeMessage(symbol, getQuote(symbol))
+            chartWelcomeMessage(symbol, getQuote(symbol), marketSource === "simulated")
           )
         : assistantMessage("welcome", WELCOME_TEXT),
-    [chartMode, symbol, getQuote]
+    [chartMode, symbol, getQuote, marketSource]
   );
 
   // Load and save share one effect so their order is not a race: the pass that restores

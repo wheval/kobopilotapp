@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { BookOpen, LineChart, Sparkles } from "lucide-react";
 
 import { AppStatPills } from "@/components/app/app-ui";
 import { KoboMascot, type MascotMood } from "@/components/mascot/kobo-mascot";
@@ -35,23 +34,10 @@ const goalOptions: { id: LearningGoal; label: string; hint: string }[] = [
   },
 ];
 
-const tourSteps = [
-  {
-    icon: BookOpen,
-    title: "follow the path",
-    body: "unlock lesson bubbles one at a time.",
-  },
-  {
-    icon: Sparkles,
-    title: "pass quick quizzes",
-    body: "tap answers, get instant feedback from kobo.",
-  },
-  {
-    icon: LineChart,
-    title: "paper trade ngx stocks",
-    body: "buy & sell nigerian tickers with ₦ play cash — zero risk.",
-  },
-];
+
+// Screens shown, in order. The old "how it works" screen (2) repeated the landing
+// page, so it's skipped: welcome → pick a goal → you're set.
+const STEP_ORDER = [0, 1, 3] as const;
 
 export function OnboardingFlow({ onDone }: { onDone: () => void }) {
   const completeOnboarding = useProgressStore((s) => s.completeOnboarding);
@@ -61,6 +47,8 @@ export function OnboardingFlow({ onDone }: { onDone: () => void }) {
   const xp = useProgressStore((s) => s.xp);
   const streak = useProgressStore((s) => s.streak);
   const [step, setStep] = useState(0);
+  const view = STEP_ORDER[step];
+  const lastStep = STEP_ORDER.length - 1;
   const [goal, setGoal] = useState<LearningGoal | null>(null);
 
   const moods: MascotMood[] = ["celebrate", "thinking", "happy", "celebrate"];
@@ -93,7 +81,7 @@ export function OnboardingFlow({ onDone }: { onDone: () => void }) {
         <div className="shrink-0 border-b border-hairline px-4 pb-3 pt-4 sm:px-6 sm:pt-6">
           <div className="mx-auto mb-3 h-1 w-10 rounded-full bg-hairline-strong sm:hidden" />
           <div className="flex gap-1.5">
-            {[0, 1, 2, 3].map((i) => (
+            {STEP_ORDER.map((_, i) => (
               <div
                 key={i}
                 className={cn(
@@ -107,9 +95,9 @@ export function OnboardingFlow({ onDone }: { onDone: () => void }) {
 
         <div className="flex-1 overflow-y-auto overscroll-contain px-4 py-4 sm:px-6">
           <div key={step} className="animate-fade-up flex flex-col items-center text-center">
-            <KoboMascot mood={moods[step]} size="md" speech={speeches[step]} />
+            <KoboMascot mood={moods[view]} size="md" speech={speeches[view]} />
 
-            {step === 0 && (
+            {view === 0 && (
               <div className="mt-4 space-y-2 sm:mt-6">
                 <h2
                   id="onboarding-title"
@@ -124,7 +112,7 @@ export function OnboardingFlow({ onDone }: { onDone: () => void }) {
               </div>
             )}
 
-            {step === 1 && (
+            {view === 1 && (
               <div className="mt-4 w-full space-y-3 text-left sm:mt-6">
                 <h2 className="text-center text-lg font-extrabold lowercase text-ink sm:text-xl">
                   pick your goal
@@ -152,26 +140,7 @@ export function OnboardingFlow({ onDone }: { onDone: () => void }) {
               </div>
             )}
 
-            {step === 2 && (
-              <div className="micro-stagger mt-4 w-full space-y-3 sm:mt-6">
-                {tourSteps.map(({ icon: Icon, title, body }) => (
-                  <div
-                    key={title}
-                    className="micro-card flex items-start gap-3 rounded-xl border-2 border-b-4 border-hairline-strong bg-paper p-3 text-left"
-                  >
-                    <span className="flex size-10 shrink-0 items-center justify-center rounded-lg border-b-4 border-b-primary-deep bg-primary">
-                      <Icon className="size-5 text-on-primary" />
-                    </span>
-                    <div>
-                      <p className="font-extrabold lowercase text-ink">{title}</p>
-                      <p className="text-sm lowercase text-ink-soft">{body}</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-
-            {step === 3 && (
+            {view === 3 && (
               <div className="mt-4 space-y-3 sm:mt-6">
                 <AppStatPills
                   streak={onboardingAlreadyComplete ? streak : 0}
@@ -198,22 +167,22 @@ export function OnboardingFlow({ onDone }: { onDone: () => void }) {
           className="shrink-0 border-t border-hairline bg-canvas px-4 py-4 sm:px-6"
           style={{ paddingBottom: "max(1rem, env(safe-area-inset-bottom))" }}
         >
-          {step < 3 ? (
+          {step < lastStep ? (
             <DuoButton
               fullWidth
               size="lg"
               variant="success"
-              disabled={step === 1 && !goal}
+              disabled={view === 1 && !goal}
               onClick={() => setStep((s) => s + 1)}
             >
               continue
             </DuoButton>
           ) : (
             <DuoButton fullWidth size="lg" variant="success" onClick={handleFinish}>
-              {onboardingAlreadyComplete ? "done" : "start learning"}
+              {onboardingAlreadyComplete ? "done" : "let's go"}
             </DuoButton>
           )}
-          {step > 0 && step < 3 && (
+          {step > 0 && step < lastStep && (
             <button
               type="button"
               onClick={() => setStep((s) => s - 1)}

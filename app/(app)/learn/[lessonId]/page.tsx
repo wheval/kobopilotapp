@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { use, useState } from "react";
 
 import {
+  LessonProgressBar,
   QuizBlock,
   QuizCompleteScreen,
 } from "@/components/app/lesson-ui";
@@ -21,6 +22,7 @@ import {
   isLessonUnlocked,
 } from "@/lib/lessons";
 import { hapticTap } from "@/lib/haptics";
+import { requiredToPass } from "@/lib/quiz-utils";
 import { useProgressStore } from "@/lib/store/progress-store";
 
 export default function LessonPage({
@@ -40,6 +42,8 @@ export default function LessonPage({
     correctCount: number;
   } | null>(null);
   const [sectionIndex, setSectionIndex] = useState(0);
+  // bumping this remounts QuizBlock for a fresh attempt
+  const [attempt, setAttempt] = useState(0);
 
   if (!lesson) notFound();
 
@@ -78,6 +82,15 @@ export default function LessonPage({
         correctCount={quizResults.correctCount}
         totalQuestions={lesson.quiz.length}
         nextLessonHref={nextLesson ? `/learn/${nextLesson.id}` : undefined}
+        onRetry={() => {
+          setQuizResults(null);
+          setAttempt((a) => a + 1);
+        }}
+        onReview={() => {
+          setQuizResults(null);
+          setShowQuiz(false);
+          setSectionIndex(0);
+        }}
       />
     );
   }
@@ -85,9 +98,13 @@ export default function LessonPage({
   if (showQuiz && !isCompleted) {
     return (
       <QuizBlock
+        key={attempt}
         lessonId={lessonId}
         onComplete={(score, correctCount) => {
-          completeLesson(lessonId, score);
+          // only a pass completes the lesson (and unlocks the next one)
+          if (correctCount >= requiredToPass(lesson.quiz.length)) {
+            completeLesson(lessonId, score);
+          }
           setQuizResults({ score, correctCount });
         }}
       />
@@ -109,14 +126,9 @@ export default function LessonPage({
   return (
     <>
       <PageShell className="pb-2 md:pb-0">
-        <div className="h-3 overflow-hidden rounded-full bg-cloud">
-          <div
-            className="h-full rounded-full bg-[#58cc02] transition-all duration-500"
-            style={{
-              width: `${((sectionIndex + 1) / lesson.sections.length) * 100}%`,
-            }}
-          />
-        </div>
+        <LessonProgressBar
+          percent={((sectionIndex + 1) / lesson.sections.length) * 100}
+        />
 
         <div className="flex justify-center">
           <KoboMascot mood="thinking" size="sm" speech="read this bit carefully!" />
@@ -132,7 +144,7 @@ export default function LessonPage({
           <h1 className="mt-2 text-xl font-extrabold lowercase text-ink sm:text-2xl">
             {section.heading.toLowerCase()}
           </h1>
-          <p className="mt-3 text-sm leading-relaxed lowercase text-ink-soft first-letter:uppercase sm:mt-4 sm:text-base">
+          <p className="mt-3 text-sm leading-relaxed text-ink/85 sm:mt-4 sm:text-base">
             {section.body}
           </p>
           <GlossaryTerms text={section.body} />

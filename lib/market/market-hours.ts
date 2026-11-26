@@ -79,6 +79,16 @@ export function getMarketSession(at: Date = new Date()): MarketSession {
   };
 }
 
+/** Milliseconds until today's 16:00 WAT close, or 0 when the market isn't open. */
+export function msUntilClose(at: Date = new Date()): number {
+  const { weekday, minutesIntoDay } = watClock(at);
+  const isWeekday = weekday >= 1 && weekday <= 5;
+  if (!isWeekday || minutesIntoDay < OPEN_MINUTES || minutesIntoDay >= CLOSE_MINUTES) {
+    return 0;
+  }
+  return (CLOSE_MINUTES - minutesIntoDay) * 60_000;
+}
+
 export function describeMarketSession(session: MarketSession): string {
   switch (session.reason) {
     case "open":

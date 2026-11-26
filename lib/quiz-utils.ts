@@ -20,6 +20,11 @@ export function shuffleQuestionOptions(question: QuizQuestion): QuizQuestion {
   };
 }
 
+/** Correct answers needed to pass a quiz and unlock the next lesson (2 of 3). */
+export function requiredToPass(totalQuestions: number): number {
+  return Math.ceil((totalQuestions * 2) / 3);
+}
+
 export function scoreHeadline(score: number): string {
   if (score >= 90) return "amazing!";
   if (score >= 70) return "good job!";

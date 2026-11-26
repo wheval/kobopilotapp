@@ -6,7 +6,7 @@ Interactive trading education platform — learn, quiz, and practice with paper 
 
 - **Landing page** — marketing site at `/`
 - **Dashboard** — progress overview at `/dashboard`
-- **Learn** — 8-lesson path with quizzes at `/learn`, plus a glossary at `/learn/glossary`
+- **Learn** — 12-lesson path with quizzes at `/learn`, plus a glossary at `/learn/glossary`
 - **Practice** — paper trading simulator at `/practice`
 - **Kobo AI** — an NGX coach in every screen, grounded in live quotes, your paper
   portfolio, and your lesson progress

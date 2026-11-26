@@ -1,201 +1,302 @@
-import { ArrowRight, Sparkles } from "lucide-react";
+import { Flame } from "lucide-react";
 
-import { AnimatedStat } from "@/components/marketing/animated-stats";
+import { StartBar, MarketClock } from "@/components/marketing/fomo";
+import { HeroQuiz } from "@/components/marketing/hero-quiz";
+import {
+  AskKoboStory,
+  PathStory,
+  PracticeBoard,
+} from "@/components/marketing/story-sections";
+import { KoboMark } from "@/components/mascot/kobo-mark";
 import { KoboMascot } from "@/components/mascot/kobo-mascot";
 import { DuoButton } from "@/components/ui/duo-button";
+import { lessons } from "@/lib/lessons";
+import { NGX_SEED_STOCKS } from "@/lib/market/ngx-seed";
+import { PAPER_STARTING_CASH } from "@/lib/paper-trading";
+import { cn } from "@/lib/utils";
+
+/** Date of the NGX closing snapshot in lib/market/ngx-seed.ts. */
+const SEED_DATE = "7 aug 2026";
+
+const naira = (n: number, decimals = 2) =>
+  `₦${n.toLocaleString("en-NG", {
+    minimumFractionDigits: decimals,
+    maximumFractionDigits: decimals,
+  })}`;
+
+const firstLesson = lessons[0];
+
+const sectionHeading =
+  "text-[clamp(2.25rem,4.6vw,3.5rem)] font-black lowercase leading-[0.98] tracking-[-0.03em] text-primary";
+const sectionBody =
+  "mt-5 max-w-[36ch] text-lg font-semibold lowercase leading-relaxed text-ink/65";
+
+/* -------------------------------------------------------------------------- */
+/*  Hero: Duolingo-style — light, mascot-led, two buttons, subject strip      */
+/* -------------------------------------------------------------------------- */
+
+function HeroPhone() {
+  return (
+    <div className="relative mx-auto w-[min(40vw,170px)] sm:w-[240px] lg:w-[280px]">
+      {/* the phone pops in; the tilt lives on the inner box so the animation can't undo it */}
+      <div className="animate-pop-in">
+        <div className="flex aspect-[9/15] -rotate-[8deg] items-center justify-center rounded-[44px] border-[6px] border-[#58cc02] bg-paper shadow-[14px_14px_0_#46a302] ring-[6px] ring-inset ring-[#d7ffb8]">
+          <div className="flex w-full flex-col items-center px-3">
+            <KoboMark mood="happy" className="w-[70%] animate-float drop-shadow-md" />
+            <p className="-mt-1 text-[0.7rem] font-black lowercase text-ink/45 sm:text-xs">
+              play cash
+            </p>
+            <p className="text-[clamp(1.05rem,4.6vw,1.55rem)] font-black tabular-nums tracking-tight text-ink">
+              {naira(PAPER_STARTING_CASH, 0)}
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <span
+        style={{ animationDelay: "350ms" }}
+        className="animate-pop-in absolute -right-8 top-8 rotate-[8deg] rounded-2xl border-b-4 border-[#c9e040] bg-accent-lime px-3.5 py-1.5 text-base font-black text-ink shadow-soft-lift sm:-right-12"
+      >
+        +10 xp
+      </span>
+      <span
+        style={{ animationDelay: "550ms" }}
+        className="animate-pop-in absolute -left-10 bottom-14 hidden -rotate-[6deg] sm:inline-flex items-center gap-1.5 rounded-2xl border-2 border-b-4 border-hairline-strong bg-paper px-3.5 py-1.5 text-base font-black lowercase text-ink shadow-soft-lift sm:-left-14"
+      >
+        <Flame className="size-5 fill-orange-400 text-orange-500" />3 day streak
+      </span>
+    </div>
+  );
+}
+
+function TickerItems({ hidden = false }: { hidden?: boolean }) {
+  return (
+    <ul className="flex shrink-0 items-center" aria-hidden={hidden || undefined}>
+      {NGX_SEED_STOCKS.map((s) => {
+        const up = s.changePercent > 0;
+        const down = s.changePercent < 0;
+        return (
+          <li
+            key={s.symbol}
+            className="flex items-baseline gap-2.5 whitespace-nowrap px-7 text-sm"
+          >
+            <span className="font-black tracking-wide text-ink/70">{s.symbol}</span>
+            <span className="font-semibold tabular-nums text-ink/50">
+              {naira(s.price)}
+            </span>
+            <span
+              className={cn(
+                "font-bold tabular-nums",
+                up && "text-success",
+                down && "text-destructive",
+                !up && !down && "text-ink/35"
+              )}
+            >
+              {up ? "+" : ""}
+              {s.changePercent.toFixed(2)}%
+            </span>
+          </li>
+        );
+      })}
+    </ul>
+  );
+}
+
+function TickerTape() {
+  return (
+    <div
+      role="region"
+      aria-label={`ngx closing prices, ${SEED_DATE}`}
+      className="flex items-center overflow-clip border-y-2 border-hairline bg-paper py-4"
+    >
+      <p className="relative z-10 shrink-0 bg-paper pl-4 pr-3 text-xs font-bold lowercase text-ink/40 sm:pl-6 lg:pl-8">
+        ngx, {SEED_DATE}
+      </p>
+      <div className="ticker-mask flex min-w-0 flex-1 overflow-clip">
+        <div className="animate-ticker flex w-max">
+          <TickerItems />
+          <TickerItems hidden />
+        </div>
+      </div>
+    </div>
+  );
+}
 
 export function Hero() {
   return (
-    <section className="relative overflow-hidden bg-canvas section-padding">
-      <div className="relative mx-auto grid max-w-7xl gap-12 px-4 sm:px-6 lg:grid-cols-2 lg:items-center lg:px-8">
-        <div className="order-2 flex justify-center lg:order-1 lg:justify-start">
-          <KoboMascot
-            mood="happy"
-            size="xl"
-            speech="trading is fun when you learn step by step!"
+    <section id="hero" className="flex min-h-[calc(100svh-4rem)] flex-col bg-paper">
+      <div className="mx-auto grid w-full max-w-5xl flex-1 items-center gap-7 px-4 py-7 sm:gap-10 sm:px-6 sm:py-14 md:grid-cols-2 md:gap-10 lg:px-8">
+        <HeroPhone />
+
+        <div className="flex flex-col items-center text-center">
+          <MarketClock className="mb-4 sm:mb-6" />
+          <h1 className="max-w-[14ch] text-[clamp(2.4rem,5.2vw,3.6rem)] font-black lowercase leading-[1.02] tracking-[-0.03em] text-ink">
+            learn the ngx market by playing it.
+          </h1>
+          <p className="mt-4 max-w-[30ch] text-lg font-semibold lowercase leading-relaxed text-ink/60">
+            bite-sized lessons, real ngx prices, and{" "}
+            {naira(PAPER_STARTING_CASH, 0)} of play money to practise with.
+          </p>
+          <div className="mt-8 flex w-full max-w-xs flex-col gap-3">
+            <DuoButton href="/dashboard" size="lg" variant="success" fullWidth>
+              start learning
+            </DuoButton>
+            <DuoButton
+              href="#try"
+              size="lg"
+              variant="ghost"
+              fullWidth
+              className="border-2 border-hairline-strong text-primary"
+            >
+              try a quick quiz
+            </DuoButton>
+          </div>
+          <p className="mt-4 text-sm font-bold lowercase text-ink/45">
+            play money. no sign-up. no card.
+          </p>
+        </div>
+      </div>
+
+      <TickerTape />
+    </section>
+  );
+}
+
+/* -------------------------------------------------------------------------- */
+/*  Try it: the playable lesson 1 quiz                                         */
+/* -------------------------------------------------------------------------- */
+
+export function TryQuiz() {
+  return (
+    <section className="bg-canvas py-20 sm:py-28">
+      {/* the anchor is the quiz layout itself (not the padded section), so
+          "try a quick quiz" lands with the whole quiz on screen */}
+      <div
+        id="try"
+        className="mx-auto grid max-w-5xl scroll-mt-20 items-center gap-12 px-4 sm:px-6 md:grid-cols-[1fr_1.05fr] lg:gap-20 lg:px-8"
+      >
+        <div>
+          <h2 className={sectionHeading}>try lesson 1 right now.</h2>
+          <p className={sectionBody}>three questions. no sign-up.</p>
+        </div>
+        <div className="mx-auto w-full max-w-md">
+          <HeroQuiz
+            questions={firstLesson.quiz.slice(0, 3)}
+            lessonHref={`/learn/${firstLesson.id}`}
           />
         </div>
-        <div className="order-1 space-y-6 lg:order-2">
-          <div className="inline-flex animate-bounce-soft items-center gap-2 rounded-full border-2 border-b-4 border-hairline-strong bg-paper px-4 py-1.5 text-sm font-bold lowercase text-ink shadow-soft-lift">
-            <Sparkles className="size-4 fill-accent-lime text-accent-lime" />
-            free, gamified, no real money
-          </div>
-          <h1 className="text-display-xl lowercase text-ink">
-            learn. practice. trade.
-          </h1>
-          <p className="max-w-xl text-body-lg lowercase text-ink-soft">
-            bite-sized ngx lessons, instant quizzes, live charts, and ₦ paper
-            trading — built for nigerian stocks from day one.
-          </p>
-          <div className="flex flex-wrap gap-3">
-            <DuoButton href="/dashboard" size="lg" variant="success">
-              start learning
-              <ArrowRight className="size-5" />
-            </DuoButton>
-            <DuoButton href="/learn" size="lg" variant="secondary">
-              see the path
-            </DuoButton>
-          </div>
-        </div>
       </div>
     </section>
   );
 }
 
-export function SocialProof() {
-  const stats = [
-    { value: "12k+", label: "lessons done" },
-    { value: "4.8k", label: "ngx learners" },
-    { value: "89k+", label: "paper trades" },
-  ];
+/* -------------------------------------------------------------------------- */
+/*  1. Learn: the path                                                         */
+/* -------------------------------------------------------------------------- */
 
+export function LessonPath() {
   return (
-    <section className="border-y-2 border-hairline bg-paper">
-      <div className="mx-auto grid max-w-7xl gap-10 px-4 py-16 sm:grid-cols-3 sm:px-6 lg:px-8 lg:py-20">
-        {stats.map((stat) => (
-          <AnimatedStat key={stat.label} value={stat.value} label={stat.label} />
-        ))}
-      </div>
-    </section>
-  );
-}
-
-export function Features() {
-  const features = [
-    {
-      title: "guided lessons",
-      description:
-        "short, friendly modules from stock basics to your first paper trade.",
-    },
-    {
-      title: "instant quizzes",
-      description:
-        "tap an answer, get feedback right away — just like duolingo.",
-    },
-    {
-      title: "paper trading",
-      description:
-        "buy ngx stocks with ₦ play cash and watch live charts update in real time.",
-    },
-    {
-      title: "xp & streaks",
-      description:
-        "earn points, keep your streak, and watch your path light up green.",
-    },
-  ];
-
-  return (
-    <section id="features" className="section-padding bg-canvas">
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div className="mx-auto mb-12 max-w-2xl text-center">
-          <h2 className="text-display-md lowercase text-ink">
-            everything you need to learn trading
+    <section id="path" className="scroll-mt-20 bg-canvas py-20 sm:py-28">
+      <div className="mx-auto grid max-w-7xl gap-14 px-4 sm:px-6 lg:grid-cols-[0.9fr_1.1fr] lg:gap-20 lg:px-8">
+        <div className="lg:sticky lg:top-28 lg:self-start">
+          <h2 className={sectionHeading}>
+            {lessons.length} lessons. pass one, unlock the next.
           </h2>
-          <p className="mt-4 text-body-lg lowercase text-ink-soft">
-            kobopilot turns intimidating finance into a game you actually want
-            to play.
+          <p className={sectionBody}>
+            from what a stock is to owning real ngx shares.
           </p>
+          <div className="mt-8">
+            <DuoButton href="/learn" variant="primary">
+              open the path
+            </DuoButton>
+          </div>
         </div>
-        <div className="grid gap-6 sm:grid-cols-2">
-          {features.map((feature) => (
-            <div
-              key={feature.title}
-              className="rounded-2xl border-2 border-b-4 border-hairline-strong bg-paper p-6 shadow-soft-lift transition-transform hover:-translate-y-1"
-            >
-              <div className="mb-4 inline-flex size-11 items-center justify-center rounded-xl border-b-4 border-b-primary-deep bg-primary">
-                <Sparkles className="size-5 fill-accent-lime text-accent-lime" />
-              </div>
-              <h3 className="text-display-sm lowercase text-ink">
-                {feature.title}
-              </h3>
-              <p className="mt-3 text-sm leading-relaxed lowercase text-ink-soft">
-                {feature.description}
-              </p>
-            </div>
-          ))}
+
+        <div className="pt-8">
+          <PathStory
+            lessons={lessons.map(({ id, order, title }) => ({ id, order, title }))}
+          />
         </div>
       </div>
     </section>
   );
 }
 
-export function HowItWorks() {
-  const steps = [
-    {
-      step: "1",
-      title: "pick a lesson bubble",
-      description: "follow the path — each node unlocks the next one.",
-    },
-    {
-      step: "2",
-      title: "read & tap continue",
-      description: "tiny lessons with a mascot cheering you on.",
-    },
-    {
-      step: "3",
-      title: "pass the quiz",
-      description: "duolingo-style buttons with instant right/wrong feedback.",
-    },
-    {
-      step: "4",
-      title: "practice with fake cash",
-      description: "paper trade stocks and track your play portfolio.",
-    },
-  ];
+/* -------------------------------------------------------------------------- */
+/*  2. Practise: the board                                                     */
+/* -------------------------------------------------------------------------- */
 
+export function Practice() {
   return (
-    <section id="how-it-works" className="section-padding bg-paper">
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div className="mx-auto mb-12 flex max-w-2xl flex-col items-center text-center">
-          <KoboMascot mood="thinking" size="md" speech="four steps. that's it!" />
-          <h2 className="mt-6 text-display-md lowercase text-ink">
-            how kobopilot works
-          </h2>
+    <section id="practice" className="scroll-mt-20 bg-paper py-20 sm:py-28">
+      <div className="mx-auto grid max-w-7xl gap-12 px-4 sm:px-6 lg:grid-cols-[1.1fr_0.9fr] lg:items-center lg:gap-20 lg:px-8">
+        <div className="order-2 min-w-0 lg:order-1">
+          <PracticeBoard
+            stocks={NGX_SEED_STOCKS.map(
+              ({ symbol, name, price, changePercent, sparkline }) => ({
+                symbol,
+                name,
+                price,
+                changePercent,
+                sparkline,
+              })
+            )}
+            startingCash={PAPER_STARTING_CASH}
+          />
         </div>
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-          {steps.map((item) => (
-            <div
-              key={item.step}
-              className="rounded-2xl border-2 border-b-4 border-hairline-strong bg-canvas p-6"
-            >
-              <span className="inline-flex size-10 items-center justify-center rounded-full border-b-4 border-b-[#46a302] bg-[#58cc02] text-lg font-extrabold text-white">
-                {item.step}
-              </span>
-              <h3 className="mt-4 font-extrabold lowercase text-ink">
-                {item.title}
-              </h3>
-              <p className="mt-2 text-sm lowercase leading-relaxed text-ink-soft">
-                {item.description}
-              </p>
-            </div>
-          ))}
+
+        <div className="order-1 lg:order-2">
+          <h2 className={sectionHeading}>then trade the real board.</h2>
+          <p className={sectionBody}>
+            eight ngx companies, {naira(PAPER_STARTING_CASH, 0)} of play money,
+            not a single kobo at risk.
+          </p>
+          <div className="mt-8">
+            <DuoButton href="/practice" variant="primary">
+              try paper trading
+            </DuoButton>
+          </div>
         </div>
       </div>
     </section>
   );
 }
+
+/* -------------------------------------------------------------------------- */
+/*  3. Ask: Kobo                                                               */
+/* -------------------------------------------------------------------------- */
+
+export function AskKobo() {
+  return (
+    <AskKoboStory
+      heading="stuck? ask kobo."
+      body="your coach knows your lessons and your portfolio."
+      headingClass={sectionHeading}
+      bodyClass={sectionBody}
+    />
+  );
+}
+
+/* -------------------------------------------------------------------------- */
+/*  Final CTA                                                                  */
+/* -------------------------------------------------------------------------- */
 
 export function FinalCta() {
   return (
-    <section className="section-padding bg-primary text-on-primary">
+    <section id="final-cta" className="border-t-2 border-hairline bg-paper py-20 sm:py-28">
       <div className="mx-auto flex max-w-3xl flex-col items-center px-4 text-center sm:px-6">
-        <KoboMascot mood="celebrate" size="lg" speech="you've got this!" />
-        <h2 className="mt-6 text-display-md lowercase text-on-primary">
-          ready to start?
+        <KoboMascot mood="celebrate" size="xl" speech="see you in lesson 1!" />
+        <h2 className="mt-8 max-w-[16ch] text-[clamp(2.4rem,5.2vw,3.6rem)] font-black lowercase leading-[1.02] tracking-[-0.03em] text-ink">
+          learn the ngx, one lesson at a time.
         </h2>
-        <p className="mt-4 text-body-lg lowercase text-on-primary/80">
-          join the path — lessons, quizzes, and paper trades await.
-        </p>
-        <DuoButton
-          href="/dashboard"
-          size="lg"
-          variant="success"
-          className="mt-8"
-        >
-          start for free
-          <ArrowRight className="size-5" />
-        </DuoButton>
+        <MarketClock className="mt-6" />
+        <div className="mt-8 w-full max-w-xs">
+          <DuoButton href="/dashboard" size="lg" variant="success" fullWidth>
+            start learning
+          </DuoButton>
+        </div>
       </div>
+      <StartBar />
     </section>
   );
 }
