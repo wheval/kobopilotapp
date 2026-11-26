@@ -47,10 +47,15 @@ export function mockReply(
 
 export function chartWelcomeMessage(
   symbol: string,
-  quote: WatchlistItem | undefined
+  quote: WatchlistItem | undefined,
+  /** true when prices come from the built-in simulator, not a live NGX feed */
+  simulated = false
 ): string {
   if (!quote) {
     return `looking at ${symbol} on your chart — ask me why the price is moving, or how to read the liveline!`;
+  }
+  if (simulated) {
+    return `looking at ${symbol} on your chart. heads up: these are simulated practice prices, not live ngx data, so treat the moves as practice. ask me how to read the chart!`;
   }
   return `looking at ${symbol} on your chart. ${explainDailyMove(quote)} ask me anything about the move!`;
 }

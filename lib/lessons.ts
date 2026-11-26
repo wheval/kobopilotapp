@@ -69,8 +69,56 @@ export const lessons: Lesson[] = [
     ],
   },
   {
-    id: "reading-a-chart",
+    id: "ngx-basics",
     order: 2,
+    title: "NGX market basics",
+    summary: "How Nigeria's stock exchange works and what moves the ASI.",
+    sections: [
+      {
+        heading: "What is the NGX?",
+        body: "The Nigerian Exchange Group (NGX) is where shares of Nigerian companies trade. When you buy DANGCEM or ZENITHBANK, your order routes through a licensed broker to the exchange.",
+      },
+      {
+        heading: "Trading hours & the ASI",
+        body: "NGX trades Monday–Friday, roughly 9:00 AM to 4:00 PM WAT. The All-Share Index (ASI) tracks the overall market — when it rises, most listed stocks tend to move up together.",
+      },
+      {
+        heading: "Boards and sectors",
+        body: "Companies sit on Premium, Main, or Growth boards. Banks, cement, telcos, and oil & gas dominate market cap. Sector trends often matter as much as single-stock news.",
+      },
+    ],
+    takeaways: [
+      "NGX is Nigeria's main equity market.",
+      "The ASI shows broad market direction.",
+      "Sector context helps you read individual moves.",
+    ],
+    quiz: [
+      {
+        id: "q6-1",
+        question: "NGX trading mainly happens on…",
+        options: ["Weekends only", "Weekdays during market hours", "Only at midnight", "Only during holidays"],
+        correctIndex: 1,
+        explanation: "NGX follows a weekday schedule with defined market hours.",
+      },
+      {
+        id: "q6-2",
+        question: "The ASI measures…",
+        options: ["One company's revenue", "Overall market direction", "Your portfolio balance", "Bank interest rates"],
+        correctIndex: 1,
+        explanation: "The All-Share Index tracks the broad NGX market.",
+      },
+      {
+        id: "q6-3",
+        question: "To buy an NGX stock you need…",
+        options: ["Direct access to the exchange floor", "A licensed broker or platform", "Government approval each time", "Only foreign currency"],
+        correctIndex: 1,
+        explanation: "Retail investors trade through licensed brokers and apps.",
+      },
+    ],
+  },
+  {
+    id: "reading-a-chart",
+    order: 3,
     title: "Reading a chart",
     summary: "Learn candlesticks, trends, and basic price action.",
     sections: [
@@ -133,7 +181,7 @@ export const lessons: Lesson[] = [
   },
   {
     id: "orders-101",
-    order: 3,
+    order: 4,
     title: "Orders 101",
     summary: "Market vs limit orders and how trades execute.",
     sections: [
@@ -196,7 +244,7 @@ export const lessons: Lesson[] = [
   },
   {
     id: "risk-management",
-    order: 4,
+    order: 5,
     title: "Risk management",
     summary: "Position sizing, diversification, and protecting capital.",
     sections: [
@@ -259,7 +307,7 @@ export const lessons: Lesson[] = [
   },
   {
     id: "your-first-trade",
-    order: 5,
+    order: 6,
     title: "Your first trade",
     summary: "Put it together with a capstone paper trade.",
     sections: [
@@ -317,54 +365,6 @@ export const lessons: Lesson[] = [
         ],
         correctIndex: 1,
         explanation: "Reflection turns experience into skill.",
-      },
-    ],
-  },
-  {
-    id: "ngx-basics",
-    order: 6,
-    title: "NGX market basics",
-    summary: "How Nigeria's stock exchange works and what moves the ASI.",
-    sections: [
-      {
-        heading: "What is the NGX?",
-        body: "The Nigerian Exchange Group (NGX) is where shares of Nigerian companies trade. When you buy DANGCEM or ZENITHBANK, your order routes through a licensed broker to the exchange.",
-      },
-      {
-        heading: "Trading hours & the ASI",
-        body: "NGX trades Monday–Friday, roughly 9:00 AM to 4:00 PM WAT. The All-Share Index (ASI) tracks the overall market — when it rises, most listed stocks tend to move up together.",
-      },
-      {
-        heading: "Boards and sectors",
-        body: "Companies sit on Premium, Main, or Growth boards. Banks, cement, telcos, and oil & gas dominate market cap. Sector trends often matter as much as single-stock news.",
-      },
-    ],
-    takeaways: [
-      "NGX is Nigeria's main equity market.",
-      "The ASI shows broad market direction.",
-      "Sector context helps you read individual moves.",
-    ],
-    quiz: [
-      {
-        id: "q6-1",
-        question: "NGX trading mainly happens on…",
-        options: ["Weekends only", "Weekdays during market hours", "Only at midnight", "Only during holidays"],
-        correctIndex: 1,
-        explanation: "NGX follows a weekday schedule with defined market hours.",
-      },
-      {
-        id: "q6-2",
-        question: "The ASI measures…",
-        options: ["One company's revenue", "Overall market direction", "Your portfolio balance", "Bank interest rates"],
-        correctIndex: 1,
-        explanation: "The All-Share Index tracks the broad NGX market.",
-      },
-      {
-        id: "q6-3",
-        question: "To buy an NGX stock you need…",
-        options: ["Direct access to the exchange floor", "A licensed broker or platform", "Government approval each time", "Only foreign currency"],
-        correctIndex: 1,
-        explanation: "Retail investors trade through licensed brokers and apps.",
       },
     ],
   },
@@ -464,6 +464,198 @@ export const lessons: Lesson[] = [
       },
     ],
   },
+  {
+    id: "reading-results",
+    order: 9,
+    title: "Reading a company's results",
+    summary: "Revenue, profit and EPS, and how to tell real growth from a one-off.",
+    sections: [
+      {
+        heading: "Revenue, profit and EPS",
+        body: "Revenue is the money a company brings in from sales. Profit after tax is what's left once costs and tax are paid. Earnings per share (EPS) divides that profit by the number of shares, so you can compare it with the share price.",
+      },
+      {
+        heading: "Where results come from",
+        body: "NGX-listed companies publish quarterly results and audited annual reports, and they appear as disclosures on the NGX website. Annual reports also include the auditor's opinion on whether the numbers can be trusted.",
+      },
+      {
+        heading: "Real growth vs a one-off",
+        body: "Compare results with the same period last year, not just the last quarter. A big jump can come from a one-off, such as foreign-exchange gains when the naira moves, which may not repeat next year.",
+      },
+    ],
+    takeaways: [
+      "EPS is profit divided by the number of shares.",
+      "Official results and annual reports beat rumours.",
+      "Compare year-on-year and watch for one-off gains.",
+    ],
+    quiz: [
+      {
+        id: "q9-1",
+        question: "Earnings per share (EPS) is…",
+        options: ["Revenue divided by employees", "Profit divided by the number of shares", "The share price divided by two", "The dividend paid last year"],
+        correctIndex: 1,
+        explanation: "EPS spreads the company's profit across every share.",
+      },
+      {
+        id: "q9-2",
+        question: "Comparing this quarter with the same quarter last year helps you…",
+        options: ["Spot real growth, not seasonal swings", "Predict tomorrow's price", "Avoid reading results", "Guarantee a profit"],
+        correctIndex: 0,
+        explanation: "Year-on-year comparisons remove seasonal effects.",
+      },
+      {
+        id: "q9-3",
+        question: "A profit jump caused by a one-off FX gain…",
+        options: ["Will definitely repeat", "May not repeat next year", "Means the stock must be bought", "Has no effect on profit"],
+        correctIndex: 1,
+        explanation: "One-off gains flatter a single period; check where the profit came from.",
+      },
+    ],
+  },
+  {
+    id: "valuation-basics",
+    order: 10,
+    title: "Valuation: P/E and dividend yield",
+    summary: "Why a high share price isn't the same as an expensive stock.",
+    sections: [
+      {
+        heading: "Price isn't value",
+        body: "SEPLAT trading above ₦11,000 and NB around ₦70 tells you nothing about which is cheaper. What matters is what you get for the price: the company's earnings and the dividends it pays.",
+      },
+      {
+        heading: "The P/E ratio",
+        body: "Price-to-earnings (P/E) is the share price divided by EPS. A P/E of 5 means you pay ₦5 for every ₦1 of yearly profit. A low P/E can mean a bargain, or that investors expect profits to fall.",
+      },
+      {
+        heading: "Dividend yield",
+        body: "Dividend yield is the yearly dividend per share divided by the share price. A ₦10 dividend on a ₦100 share is a 10% yield. An unusually high yield can be a warning that the market expects the dividend to be cut.",
+      },
+    ],
+    takeaways: [
+      "A high share price doesn't make a stock expensive.",
+      "P/E = share price ÷ earnings per share.",
+      "Dividend yield = yearly dividend ÷ share price.",
+    ],
+    quiz: [
+      {
+        id: "q10-1",
+        question: "The P/E ratio is calculated as…",
+        options: ["Share price ÷ earnings per share", "Revenue ÷ profit", "Dividend × share price", "Market cap ÷ employees"],
+        correctIndex: 0,
+        explanation: "P/E compares what you pay with the profit behind each share.",
+      },
+      {
+        id: "q10-2",
+        question: "A ₦5 yearly dividend on a ₦50 share is a yield of…",
+        options: ["5%", "10%", "50%", "1%"],
+        correctIndex: 1,
+        explanation: "₦5 ÷ ₦50 = 0.10, a 10% dividend yield.",
+      },
+      {
+        id: "q10-3",
+        question: "A stock priced at ₦11,000 per share is…",
+        options: ["Always too expensive", "Not necessarily expensive: compare it with earnings", "Always a bargain", "Impossible to buy"],
+        correctIndex: 1,
+        explanation: "Value depends on earnings and dividends, not the price tag alone.",
+      },
+    ],
+  },
+  {
+    id: "avoiding-scams",
+    order: 11,
+    title: "Spotting scams and hype",
+    summary: "Guaranteed returns, unregistered platforms and pump-and-dumps.",
+    sections: [
+      {
+        heading: "Guaranteed returns are a red flag",
+        body: "Real investments carry risk, so no one can promise a fixed high return. Schemes that guarantee big monthly payouts and pay early members with new members' money are Ponzi schemes, and they collapse.",
+      },
+      {
+        heading: "Check who you're dealing with",
+        body: "Stockbrokers and investment platforms in Nigeria must be registered with the Securities and Exchange Commission (SEC). Check the SEC's list of registered capital market operators before you send anyone money.",
+      },
+      {
+        heading: "Pump and dump",
+        body: "Groups hype a small stock on social media, buy early, then sell to latecomers as the price spikes. If a tip pushes you to buy right now before it's too late, slow down and check the company's filings.",
+      },
+    ],
+    takeaways: [
+      "Guaranteed high returns are a classic scam sign.",
+      "Only use SEC-registered brokers and platforms.",
+      "Urgent hype is a reason to slow down, not speed up.",
+    ],
+    quiz: [
+      {
+        id: "q11-1",
+        question: "A scheme promising a guaranteed 30% every month is most likely…",
+        options: ["A safe savings plan", "A scam", "A government bond", "A normal stock"],
+        correctIndex: 1,
+        explanation: "No real investment can guarantee returns like that.",
+      },
+      {
+        id: "q11-2",
+        question: "Before using a broker or platform, check that it is registered with…",
+        options: ["A WhatsApp group", "The SEC", "The stock's fan page", "No one"],
+        correctIndex: 1,
+        explanation: "The SEC registers and supervises capital market operators in Nigeria.",
+      },
+      {
+        id: "q11-3",
+        question: "A pump-and-dump scheme makes money by…",
+        options: ["Paying dividends", "Selling hyped shares to late buyers", "Lowering the spread", "Publishing audited results"],
+        correctIndex: 1,
+        explanation: "The promoters sell at the top, leaving latecomers with the losses.",
+      },
+    ],
+  },
+  {
+    id: "owning-real-shares",
+    order: 12,
+    title: "Owning real NGX shares",
+    summary: "Brokers, your CHN, fees, and how dividends reach you.",
+    sections: [
+      {
+        heading: "Brokers and your CHN",
+        body: "To buy real NGX shares you open an account with an SEC-registered stockbroker; many offer apps. Your shares are held electronically at the Central Securities Clearing System (CSCS) under your Clearing House Number (CHN).",
+      },
+      {
+        heading: "Fees add up",
+        body: "Every buy and sell pays a broker's commission plus regulatory fees. Lots of small, frequent trades can lose money to costs even when prices barely move, which is one more reason to practise here first.",
+      },
+      {
+        heading: "Getting your dividends",
+        body: "Dividends are paid by the company's registrar. Register an e-dividend mandate so payments go straight into your bank account instead of sitting unclaimed.",
+      },
+    ],
+    takeaways: [
+      "Real shares are bought through an SEC-registered stockbroker.",
+      "Your shares sit at the CSCS under your CHN.",
+      "Fees and an e-dividend mandate both matter.",
+    ],
+    quiz: [
+      {
+        id: "q12-1",
+        question: "Your real NGX shares are held electronically under your…",
+        options: ["BVN at your bank", "CHN at the CSCS", "Phone number", "Email address"],
+        correctIndex: 1,
+        explanation: "The CSCS holds shares under each investor's Clearing House Number.",
+      },
+      {
+        id: "q12-2",
+        question: "Why can lots of small, frequent trades lose money?",
+        options: ["Fees on every trade add up", "Small trades are illegal", "Prices always fall", "Dividends stop"],
+        correctIndex: 0,
+        explanation: "Commission and fees are charged on every buy and sell.",
+      },
+      {
+        id: "q12-3",
+        question: "To receive dividends directly in your bank account, you should…",
+        options: ["Wait for a cheque", "Register an e-dividend mandate", "Sell your shares", "Call the stock exchange"],
+        correctIndex: 1,
+        explanation: "An e-dividend mandate sends payments straight to your bank.",
+      },
+    ],
+  },
 ];
 
 export function getLessonById(id: string): Lesson | undefined {
@@ -481,6 +673,10 @@ export function isLessonUnlocked(
   completedLessonIds: string[]
 ): boolean {
   if (lessonOrder === 1) return true;
+  // a lesson you've already completed always stays open, even if the path
+  // order changed since (ngx basics moved from lesson 6 to lesson 2)
+  const self = lessons.find((l) => l.order === lessonOrder);
+  if (self && completedLessonIds.includes(self.id)) return true;
   const previous = lessons.find((l) => l.order === lessonOrder - 1);
   return previous ? completedLessonIds.includes(previous.id) : false;
 }

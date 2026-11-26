@@ -39,6 +39,7 @@ export function StockChart() {
   const getStockName = useTradingStore((s) => s.getStockName);
   const getPrice = useTradingStore((s) => s.getPrice);
   const quote = useMarketStore((s) => s.getQuote(selectedSymbol));
+  const simulatedQuotes = useMarketStore((s) => s.source === "simulated");
   const updatedAt = useMarketStore((s) => s.updatedAt);
   const session = useMarketStore((s) => s.session);
   const staleFeed = useMarketStore((s) => s.staleFeed);
@@ -156,7 +157,7 @@ export function StockChart() {
       <div className="mb-3 flex flex-wrap items-start justify-between gap-x-4 gap-y-2">
         <div className="min-w-0">
           <p className="text-xs font-bold uppercase text-ink-soft">
-            {liveFeed ? "ngx daily" : "demo chart"}
+            {!liveFeed ? "demo chart" : simulatedQuotes ? "ngx · simulated prices" : "ngx daily"}
           </p>
           <p className="truncate text-lg font-extrabold uppercase text-ink">
             {selectedSymbol}
@@ -189,7 +190,7 @@ export function StockChart() {
         )}
       </div>
 
-      <FeedSwitch feed={feed} onChange={setFeed} />
+      <FeedSwitch feed={feed} onChange={setFeed} simulated={simulatedQuotes} />
 
       {liveFeed && (
         <p className="mb-3 text-xs lowercase text-ink-soft">
@@ -304,9 +305,9 @@ export function StockChart() {
           <div className="flex h-full flex-col items-center justify-center gap-2 px-4 text-center text-sm lowercase text-ink-soft">
             {liveUnavailable ? (
               <>
-                <p>no ngx history available for {selectedSymbol}.</p>
+                <p>price history for {selectedSymbol} isn&apos;t available right now.</p>
                 <p className="text-xs">
-                  daily bars need an ngxpulse api key — or switch to demo mode.
+                  switch to demo mode to see how a chart moves.
                 </p>
               </>
             ) : (
@@ -352,9 +353,12 @@ export function StockChart() {
 function FeedSwitch({
   feed,
   onChange,
+  simulated,
 }: {
   feed: ChartFeed;
   onChange: (feed: ChartFeed) => void;
+  /** no live NGX feed connected: don't call the "live" option live */
+  simulated: boolean;
 }) {
   return (
     <div
@@ -364,7 +368,7 @@ function FeedSwitch({
     >
       {(
         [
-          { value: "live" as const, label: "ngx live" },
+          { value: "live" as const, label: simulated ? "ngx (simulated)" : "ngx live" },
           { value: "demo" as const, label: "demo mode" },
         ]
       ).map((option) => (

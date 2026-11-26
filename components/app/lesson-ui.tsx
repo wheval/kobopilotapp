@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { X } from "lucide-react";
 import { useState } from "react";
 
 import {
@@ -18,6 +19,7 @@ import { hapticError, hapticSuccess } from "@/lib/haptics";
 import { isLessonUnlocked, lessons } from "@/lib/lessons";
 import {
   optionLabel,
+  requiredToPass,
   scoreHeadline,
   scoreMascotSpeech,
   shuffleQuestionOptions,
@@ -25,29 +27,85 @@ import {
 import { useProgressStore } from "@/lib/store/progress-store";
 import { cn } from "@/lib/utils";
 
+/** Lesson/quiz progress bar with a way out back to the path. */
+export function LessonProgressBar({ percent }: { percent: number }) {
+  return (
+    <div className="flex items-center gap-3">
+      <Link
+        href="/learn"
+        aria-label="Exit to the lesson path"
+        className="flex size-9 shrink-0 items-center justify-center rounded-xl text-ink/45 transition-colors hover:bg-cloud hover:text-ink"
+      >
+        <X className="size-5" strokeWidth={3} />
+      </Link>
+      <div className="h-3 flex-1 overflow-hidden rounded-full bg-cloud">
+        <div
+          className="h-full rounded-full bg-[#58cc02] transition-all duration-500 ease-out"
+          style={{ width: `${percent}%` }}
+        />
+      </div>
+    </div>
+  );
+}
+
 export function QuizCompleteScreen({
   score,
   correctCount,
   totalQuestions,
   nextLessonHref,
   variant = "fresh",
+  onRetry,
+  onReview,
 }: {
   score: number;
   correctCount: number;
   totalQuestions: number;
   nextLessonHref?: string;
   variant?: "fresh" | "review";
+  /** Shown when the quiz wasn't passed: retake it / re-read the lesson. */
+  onRetry?: () => void;
+  onReview?: () => void;
 }) {
-  const headline = scoreHeadline(score);
+  const needed = requiredToPass(totalQuestions);
+  const passed = variant === "review" || correctCount >= needed;
+  const headline = passed ? scoreHeadline(score) : "almost there!";
   const speech =
     variant === "review"
       ? `you scored ${score}% last time!`
-      : scoreMascotSpeech(score);
+      : passed
+        ? scoreMascotSpeech(score)
+        : "so close. let's go again!";
+
+  const actions = passed ? (
+    <>
+      {nextLessonHref ? (
+        <DuoButton href={nextLessonHref} fullWidth size="lg">
+          next lesson
+        </DuoButton>
+      ) : (
+        <DuoButton href="/practice" variant="success" fullWidth size="lg">
+          start paper trading
+        </DuoButton>
+      )}
+      <DuoButton href="/learn" variant="secondary" fullWidth size="lg">
+        back to path
+      </DuoButton>
+    </>
+  ) : (
+    <>
+      <DuoButton onClick={onRetry} variant="success" fullWidth size="lg">
+        try again
+      </DuoButton>
+      <DuoButton onClick={onReview} variant="secondary" fullWidth size="lg">
+        review the lesson
+      </DuoButton>
+    </>
+  );
 
   return (
     <PageShell size="md">
       <div className="flex flex-col items-center gap-6 text-center">
-        <KoboMascot mood="celebrate" size="xl" speech={speech} />
+        <KoboMascot mood={passed ? "celebrate" : "thinking"} size="xl" speech={speech} />
 
         <div className="w-full rounded-2xl border-2 border-b-4 border-hairline-strong bg-paper p-6 shadow-soft-lift sm:p-8">
           <p className="text-xs font-bold uppercase tracking-wide text-ink-soft">
@@ -56,44 +114,28 @@ export function QuizCompleteScreen({
           <p className="mt-2 text-2xl font-extrabold lowercase text-ink">
             {headline}
           </p>
-          <p className="mt-4 text-5xl font-extrabold tabular-nums text-[#58cc02] sm:text-6xl animate-score-pop">
+          <p
+            className={cn(
+              "mt-4 text-5xl font-extrabold tabular-nums sm:text-6xl animate-score-pop",
+              passed ? "text-[#58cc02]" : "text-ink"
+            )}
+          >
             {score}%
           </p>
           <p className="mt-3 text-sm font-semibold lowercase text-ink-soft">
             you got {correctCount} of {totalQuestions} questions right
           </p>
+          {!passed && (
+            <p className="mt-2 text-sm font-bold lowercase text-ink">
+              get {needed} of {totalQuestions} right to unlock the next lesson.
+            </p>
+          )}
         </div>
 
-        <div className="hidden w-full space-y-2 md:block">
-          {nextLessonHref ? (
-            <DuoButton href={nextLessonHref} fullWidth size="lg">
-              next lesson
-            </DuoButton>
-          ) : (
-            <DuoButton href="/practice" variant="success" fullWidth size="lg">
-              start paper trading
-            </DuoButton>
-          )}
-          <DuoButton href="/learn" variant="secondary" fullWidth size="lg">
-            back to path
-          </DuoButton>
-        </div>
+        <div className="hidden w-full space-y-2 md:block">{actions}</div>
       </div>
 
-      <MobileStickyCta className="space-y-2">
-        {nextLessonHref ? (
-          <DuoButton href={nextLessonHref} fullWidth size="lg">
-            next lesson
-          </DuoButton>
-        ) : (
-          <DuoButton href="/practice" variant="success" fullWidth size="lg">
-            start paper trading
-          </DuoButton>
-        )}
-        <DuoButton href="/learn" variant="secondary" fullWidth size="lg">
-          back to path
-        </DuoButton>
-      </MobileStickyCta>
+      <MobileStickyCta className="space-y-2">{actions}</MobileStickyCta>
       <MobileScrollSpacer />
     </PageShell>
   );
@@ -169,21 +211,17 @@ export function QuizBlock({
       return;
     }
 
+    // XP: +10 per correct answer (above); the completion bonus is awarded by
+    // completeLesson, and only when the quiz is passed.
     const finalCorrect = correctCount;
     const finalScore = Math.round((finalCorrect / questions.length) * 100);
-    addXp(25);
     onComplete(finalScore, finalCorrect);
   };
 
   return (
     <PageShell>
       <div className="space-y-6 pb-4 md:pb-0">
-        <div className="h-3 overflow-hidden rounded-full bg-cloud">
-          <div
-            className="h-full rounded-full bg-[#58cc02] transition-all duration-500 ease-out"
-            style={{ width: `${progress}%` }}
-          />
-        </div>
+        <LessonProgressBar percent={progress} />
 
         <div className="flex justify-center py-1 sm:py-2">
           <KoboMascot mood={mascotMood} size="md" speech={mascotSpeech} />

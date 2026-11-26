@@ -3,11 +3,12 @@
 import { LessonPath } from "@/components/app/lesson-path";
 import { KoboMascot } from "@/components/mascot/kobo-mascot";
 import { DuoButton } from "@/components/ui/duo-button";
+import { lessons } from "@/lib/lessons";
 import { useProgressStore } from "@/lib/store/progress-store";
 
 export default function LearnPage() {
-  const xp = useProgressStore((s) => s.xp);
-  const streak = useProgressStore((s) => s.streak);
+  // streak & xp already sit in the sidebar / top bar; the path shows progress
+  const done = useProgressStore((s) => s.completedLessonIds.length);
 
   return (
     <div className="mx-auto max-w-2xl space-y-6 px-1 pb-2 pt-3 lg:p-8">
@@ -20,15 +21,11 @@ export default function LearnPage() {
             tap a lesson bubble to start learning
           </p>
         </div>
-        <div className="flex gap-2">
-          <div className="rounded-xl border-2 border-b-4 border-[#ffc800] bg-[#ffc800]/20 px-3 py-2 text-center">
-            <p className="text-lg font-extrabold text-[#ffc800]">{streak || 0}</p>
-            <p className="text-[10px] font-bold uppercase text-ink-soft">streak</p>
-          </div>
-          <div className="rounded-xl border-2 border-b-4 border-[#84d8ff] bg-[#ddf4ff] px-3 py-2 text-center">
-            <p className="text-lg font-extrabold text-[#1899d6]">{xp}</p>
-            <p className="text-[10px] font-bold uppercase text-ink-soft">xp</p>
-          </div>
+        <div className="shrink-0 rounded-xl border-2 border-b-4 border-[#46a302] bg-[#d7ffb8] px-3 py-2 text-center">
+          <p className="text-lg font-extrabold tabular-nums text-[#3c8a02]">
+            {done}/{lessons.length}
+          </p>
+          <p className="text-[10px] font-bold lowercase text-ink-soft">lessons done</p>
         </div>
       </div>
 

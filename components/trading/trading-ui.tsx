@@ -38,9 +38,13 @@ function MarketSourceBadge() {
       <Badge className="bg-primary/15 text-primary hover:bg-primary/15">
         NGX
       </Badge>
-      {source === "live" && (
+      {source === "live" ? (
         <Badge variant="outline" className="border-success text-success">
           {providerLabel} live
+        </Badge>
+      ) : (
+        <Badge variant="outline" className="border-amber-500 text-amber-700">
+          simulated prices
         </Badge>
       )}
       {updatedAt && (
@@ -122,7 +126,11 @@ export function OrderForm() {
   const [side, setSide] = useState<OrderSide>("buy");
   const [message, setMessage] = useState<string | null>(null);
 
-  const price = getPrice(selectedSymbol);
+  // getPrice() reads the market store without subscribing, so on its own the
+  // form kept showing the first-render price while orders filled at the live
+  // one. Subscribing to the quote keeps the shown price = the fill price.
+  const livePrice = useMarketStore((s) => s.getQuote(selectedSymbol)?.price);
+  const price = livePrice ?? getPrice(selectedSymbol);
   const qty = parseInt(quantity, 10) || 0;
   const total = price * qty;
 
@@ -217,6 +225,8 @@ export function PortfolioSummary() {
   const getPortfolioValue = useTradingStore((s) => s.getPortfolioValue);
   const getTotalPnL = useTradingStore((s) => s.getTotalPnL);
   const resetPortfolio = useTradingStore((s) => s.resetPortfolio);
+  // re-render when quotes refresh: portfolio value / P&L are derived from them
+  useMarketStore((s) => s.updatedAt);
 
   const portfolioValue = getPortfolioValue();
   const pnl = getTotalPnL();

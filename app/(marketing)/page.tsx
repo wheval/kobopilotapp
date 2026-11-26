@@ -1,18 +1,20 @@
 import {
-  Features,
+  AskKobo,
   FinalCta,
   Hero,
-  HowItWorks,
-  SocialProof,
+  LessonPath,
+  Practice,
+  TryQuiz,
 } from "@/components/marketing/landing-sections";
 
 export default function HomePage() {
   return (
     <main>
       <Hero />
-      <SocialProof />
-      <Features />
-      <HowItWorks />
+      <TryQuiz />
+      <LessonPath />
+      <Practice />
+      <AskKobo />
       <FinalCta />
     </main>
   );

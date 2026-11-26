@@ -122,12 +122,17 @@
     @apply border-border outline-ring/50;
   }
   html {
-    @apply scroll-smooth font-sans;
+    /* no global scroll-smooth: Lenis handles smooth scrolling on the landing page */
+    @apply font-sans;
     -webkit-tap-highlight-color: transparent;
     overflow-x: hidden;
+    /* keep the scrollbar's space reserved so locking scroll doesn't shift the page */
+    scrollbar-gutter: stable;
   }
   body {
-    @apply bg-background text-foreground overflow-x-hidden;
+    @apply bg-background text-foreground;
+    /* clip (not hidden): hidden makes body a scroll container and breaks sticky */
+    overflow-x: clip;
   }
   a,
   button,
@@ -424,3 +429,32 @@
     transition: none !important;
   }
 }
+
+/* Landing ticker tape: two identical rows slide left by exactly one row. */
+@keyframes ticker {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+.animate-ticker {
+  animation: ticker 45s linear infinite;
+}
+
+.ticker-mask {
+  mask-image: linear-gradient(to right, transparent, black 3rem, black calc(100% - 3rem), transparent);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-ticker,
+  .animate-float,
+  .animate-bounce-soft,
+  .animate-wiggle,
+  .animate-sparkle {
+    animation: none;
+  }
+}
+

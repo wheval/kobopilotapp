@@ -85,6 +85,16 @@ export function DuoButton({
     onClick?.(e);
   };
 
+  // In-page anchors stay plain <a>: next/link scrolls hashes itself, which
+  // bypasses the landing page's smooth scroller (Lenis) and lands off-target.
+  if (href?.startsWith("#") && !disabled) {
+    return (
+      <a href={href} className={classes} onClick={() => hapticTap()}>
+        {children}
+      </a>
+    );
+  }
+
   if (href && !disabled) {
     return (
       <Link href={href} className={classes} onClick={() => hapticTap()}>

@@ -14,7 +14,9 @@ export function KoboMark({
   mood = "happy",
   variant = "full",
 }: KoboMarkProps) {
-  const viewBox = variant === "head" ? "22 22 76 76" : "0 0 120 120";
+  // The head body spans x 20–100, y 28–96. The old "22 22 76 76" crop was
+  // narrower than the body, which sliced ~2px off each side ("cut-off ears").
+  const viewBox = variant === "head" ? "16 20 88 88" : "0 0 120 120";
 
   return (
     <svg

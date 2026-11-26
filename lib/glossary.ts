@@ -86,6 +86,34 @@ export const glossary: GlossaryEntry[] = [
       "Practice buying and selling with fake money — zero real risk.",
     example: "Kobopilot's practice tab uses ₦ play cash, not your bank account.",
   },
+  {
+    term: "EPS",
+    definition: "Earnings per share: a company's profit after tax divided by its number of shares.",
+    example: "If profit is ₦10bn across 1bn shares, EPS is ₦10.",
+  },
+  {
+    term: "P/E ratio",
+    definition: "Price-to-earnings: the share price divided by earnings per share.",
+    example: "A ₦100 share with ₦20 EPS has a P/E of 5.",
+  },
+  {
+    term: "dividend yield",
+    definition: "The yearly dividend per share divided by the share price.",
+    example: "A ₦10 dividend on a ₦100 share is a 10% yield.",
+  },
+  {
+    term: "SEC",
+    definition: "The Securities and Exchange Commission, which registers and supervises Nigeria's capital market operators.",
+    example: "Check that a broker is SEC-registered before sending money.",
+  },
+  {
+    term: "CSCS",
+    definition: "The Central Securities Clearing System, where NGX shares are held electronically.",
+  },
+  {
+    term: "CHN",
+    definition: "Clearing House Number: your account identifier at the CSCS, where your shares are recorded.",
+  },
 ];
 
 const glossaryMap = new Map(

@@ -1,6 +1,6 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
-import { useEffect, useState } from "react";
+import { useSyncExternalStore } from "react";
 
 import { lessons } from "@/lib/lessons";
 
@@ -65,7 +65,8 @@ export const useProgressStore = create<ProgressState>()(
         const alreadyComplete = get().onboardingComplete;
         set({ onboardingComplete: true, learningGoal: goal });
         if (!alreadyComplete) {
-          get().addXp(20);
+          // plain XP bump: finishing onboarding isn't a streak day
+          set((state) => ({ xp: state.xp + 20 }));
         }
       },
 
@@ -112,20 +113,17 @@ export const useProgressStore = create<ProgressState>()(
   )
 );
 
-/** Wait for localStorage before reading onboarding/tour flags (prevents modal flash). */
+/**
+ * Wait for localStorage before reading onboarding/tour flags (prevents modal flash).
+ *
+ * useSyncExternalStore with a `false` server snapshot keeps the first client render
+ * identical to the server's, then flips to true. (Reading hasHydrated() straight into
+ * useState made the first client render differ — a hydration mismatch on first visit.)
+ */
 export function useProgressHydrated(): boolean {
-  const [hydrated, setHydrated] = useState(
-    () =>
-      typeof window !== "undefined" &&
-      useProgressStore.persist.hasHydrated()
+  return useSyncExternalStore(
+    (onChange) => useProgressStore.persist.onFinishHydration(onChange),
+    () => useProgressStore.persist.hasHydrated(),
+    () => false
   );
-
-  useEffect(() => {
-    if (hydrated) return;
-    return useProgressStore.persist.onFinishHydration(() => {
-      setHydrated(true);
-    });
-  }, [hydrated]);
-
-  return hydrated;
 }

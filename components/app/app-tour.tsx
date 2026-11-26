@@ -5,6 +5,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { KoboMascot } from "@/components/mascot/kobo-mascot";
 import { DuoButton } from "@/components/ui/duo-button";
 import { useProgressStore } from "@/lib/store/progress-store";
+import { lockPageScroll } from "@/lib/scroll-lock";
 
 type TourPlacement = "above" | "below" | "auto";
 
@@ -46,6 +47,7 @@ const tourSteps: {
 ];
 
 const PAD = 10;
+const EDGE = 2;
 const GAP = 20;
 const TOOLTIP_ESTIMATE = 320;
 
@@ -81,10 +83,12 @@ function getVisibleRect(selector: string): DOMRect | null {
 }
 
 function computeHighlight(rect: DOMRect) {
-  const top = Math.max(8, rect.top - PAD);
-  const left = Math.max(8, rect.left - PAD);
-  const right = Math.min(window.innerWidth - 8, rect.right + PAD);
-  const bottom = Math.min(window.innerHeight - 8, rect.bottom + PAD);
+  // Keep the spotlight inside the screen, but never so far in that it clips the
+  // target itself (e.g. the tab-bar label sits ~3px from the bottom edge).
+  const top = Math.max(EDGE, rect.top - PAD);
+  const left = Math.max(EDGE, rect.left - PAD);
+  const right = Math.min(window.innerWidth - EDGE, rect.right + PAD);
+  const bottom = Math.min(window.innerHeight - EDGE, rect.bottom + PAD);
   return {
     top,
     left,
@@ -148,12 +152,7 @@ export function AppTour() {
     setRect(visible);
   }, [current.target]);
 
-  useEffect(() => {
-    document.body.style.overflow = "hidden";
-    return () => {
-      document.body.style.overflow = "";
-    };
-  }, []);
+  useEffect(() => lockPageScroll(), []);
 
   useEffect(() => {
     const frame = requestAnimationFrame(measureTarget);
@@ -221,60 +220,25 @@ export function AppTour() {
       aria-modal
       aria-label="App tour"
     >
+      {/* click-anywhere-to-skip catcher; dims fully only when no target is found */}
+      <div
+        className={layout ? "absolute inset-0" : "absolute inset-0 bg-ink/55"}
+        onClick={finish}
+        aria-hidden
+      />
+
+      {/* spotlight: one rounded cutout (big box-shadow dims everything else) + green ring */}
       {layout && (
-        <>
-          <div
-            className="absolute inset-x-0 top-0 bg-ink/55"
-            style={{ height: layout.highlight.top }}
-            onClick={finish}
-            aria-hidden
-          />
-          <div
-            className="absolute bg-ink/55"
-            style={{
-              top: layout.highlight.top,
-              left: 0,
-              width: layout.highlight.left,
-              height: layout.highlight.height,
-            }}
-            onClick={finish}
-            aria-hidden
-          />
-          <div
-            className="absolute bg-ink/55"
-            style={{
-              top: layout.highlight.top,
-              left: layout.highlight.right,
-              right: 0,
-              height: layout.highlight.height,
-            }}
-            onClick={finish}
-            aria-hidden
-          />
-          <div
-            className="absolute inset-x-0 bg-ink/55"
-            style={{ top: layout.highlight.bottom, bottom: 0 }}
-            onClick={finish}
-            aria-hidden
-          />
-
-          <div
-            className="pointer-events-none absolute z-71 rounded-xl ring-4 ring-[#58cc02] ring-offset-2 ring-offset-transparent transition-all duration-200"
-            style={{
-              top: layout.highlight.top,
-              left: layout.highlight.left,
-              width: layout.highlight.width,
-              height: layout.highlight.height,
-            }}
-          />
-        </>
-      )}
-
-      {!layout && (
         <div
-          className="absolute inset-0 bg-ink/55"
-          onClick={finish}
-          aria-hidden
+          className="pointer-events-none absolute z-71 rounded-2xl transition-all duration-200"
+          style={{
+            top: layout.highlight.top,
+            left: layout.highlight.left,
+            width: layout.highlight.width,
+            height: layout.highlight.height,
+            boxShadow:
+              "0 0 0 4px #58cc02, 0 0 0 9999px rgba(12, 35, 26, 0.55)",
+          }}
         />
       )}
 
