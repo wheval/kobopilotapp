@@ -27,9 +27,9 @@ Everything is optional — the app runs with no configuration at all.
 
 | Variable | Effect if unset |
 | --- | --- |
-| `OPENAI_API_KEY` | Kobo AI falls back to scripted offline replies |
-| `OPENAI_CHAT_MODEL` | Defaults to `gpt-5-mini` |
-| `OPENAI_REASONING_EFFORT` | Defaults to `minimal` (gpt-5* models only) |
+| `AI_GATEWAY_API_KEY` | Kobo AI falls back to scripted offline replies. Uses [Vercel AI Gateway](https://vercel.com/docs/ai-gateway) |
+| `AI_GATEWAY_MODEL` | Defaults to `openai/gpt-5-mini` (any ID from the gateway's `/v1/models`) |
+| `AI_REASONING_EFFORT` | Defaults to `minimal` (`openai/gpt-5*` models only) |
 | `NGXPULSE_API_KEY`, `TROVE_API_KEY`, `ITICK_API_TOKEN` | Prices are deterministically simulated |
 
 Market providers are tried in order and the first returning 3+ quotes wins. Leaving a

@@ -1,4 +1,3 @@
-import { openai } from "@ai-sdk/openai";
 import {
   convertToModelMessages,
   createUIMessageStream,
@@ -25,7 +24,12 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 export const maxDuration = 30;
 
-const DEFAULT_MODEL = "gpt-5-mini";
+/**
+ * Models are served through Vercel AI Gateway as `provider/model` strings (the AI SDK
+ * routes plain strings to the gateway and authenticates with AI_GATEWAY_API_KEY).
+ * Any ID from https://ai-gateway.vercel.sh/v1/models works via AI_GATEWAY_MODEL.
+ */
+const DEFAULT_MODEL = "openai/gpt-5-mini";
 /**
  * Reasoning tokens count against this budget on gpt-5* models, so it has to sit well
  * above the visible reply length — at 500 the answer itself got truncated mid-sentence.
@@ -73,7 +77,7 @@ export async function POST(req: Request) {
   const limit = checkRateLimit(clientKey(req.headers));
   if (!limit.allowed) {
     // Answered as a normal bubble rather than a 4xx: the user still gets a reply, and
-    // no OpenAI call is made, which is the point of the limiter.
+    // no model call is made, which is the point of the limiter.
     return streamFixedReply(RATE_LIMIT_MESSAGE, {
       "Retry-After": String(limit.retryAfterSeconds),
       "X-Kobopilot-Rate-Limited": "1",
@@ -103,7 +107,8 @@ export async function POST(req: Request) {
   const { messages } = normalized;
   const ctx = parsed.data.context;
 
-  if (!process.env.OPENAI_API_KEY) {
+  // No gateway key → scripted offline replies, so the app still works with zero config.
+  if (!process.env.AI_GATEWAY_API_KEY) {
     const quote = await quoteForContext(ctx);
     const reply = mockReply(lastUserText(messages), quote, ctx.mode === "chart");
     return streamFixedReply(reply, { "X-Kobopilot-Chat-Mode": "offline" });
@@ -111,10 +116,10 @@ export async function POST(req: Request) {
 
   // `||`, not `??`: a declared-but-blank env var is the common case when someone
   // copies .env.example, and `""` is not a usable model id.
-  const modelId = process.env.OPENAI_CHAT_MODEL || DEFAULT_MODEL;
+  const modelId = process.env.AI_GATEWAY_MODEL || DEFAULT_MODEL;
 
   const result = streamText({
-    model: openai(modelId),
+    model: modelId,
     system: buildSystemPrompt(ctx),
     messages: await convertToModelMessages(messages),
     tools: buildTools(ctx),
@@ -122,12 +127,13 @@ export async function POST(req: Request) {
     maxOutputTokens: MAX_OUTPUT_TOKENS,
     abortSignal: req.signal,
     // gpt-5* are reasoning models and default to more thinking than a short coaching
-    // reply needs. Non-gpt-5 models reject the option, so only send it when it applies.
-    providerOptions: modelId.startsWith("gpt-5")
+    // reply needs. Through the gateway, provider options stay keyed by the real
+    // provider ("openai"); other models reject the option, so only send it for gpt-5*.
+    providerOptions: modelId.startsWith("openai/gpt-5")
       ? {
           openai: {
             reasoningEffort:
-              process.env.OPENAI_REASONING_EFFORT || DEFAULT_REASONING_EFFORT,
+              process.env.AI_REASONING_EFFORT || DEFAULT_REASONING_EFFORT,
           },
         }
       : undefined,

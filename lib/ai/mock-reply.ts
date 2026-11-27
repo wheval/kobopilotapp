@@ -2,7 +2,7 @@ import { explainDailyMove } from "@/lib/market/quote-utils";
 import type { WatchlistItem } from "@/lib/types";
 
 /**
- * Offline coach replies. Used when OPENAI_API_KEY is unset and as the client-side
+ * Offline coach replies. Used when AI_GATEWAY_API_KEY is unset and as the client-side
  * fallback when /api/chat fails, so the chat never dead-ends.
  */
 export function mockReply(
